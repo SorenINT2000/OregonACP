@@ -1,0 +1,32 @@
+.control {
+  padding-left: 20px;
+  padding-right: 20px;
+  font-family: Greycliff CF, var(--mantine-font-family);
+  font-size: 22px;
+  position: relative;
+  overflow: visible;
+  transition: all 0.3s ease;
+}
+
+.control:hover {
+  padding-right: 50px;
+}
+
+.controlContent {
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+.arrow {
+  position: absolute;
+  right: 20px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  color: var(--mantine-color-white);
+}
+
+.control:hover .arrow {
+  opacity: 1;
+  transform: translateX(0);
+} 

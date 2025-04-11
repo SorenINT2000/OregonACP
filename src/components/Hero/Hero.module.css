@@ -1,0 +1,97 @@
+.root {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(250deg, rgba(130, 201, 30, 0) 0%, var(--hero-gradient-to) 70%), var(--hero-bg-image);
+  padding-top: calc(var(--mantine-spacing-xl) * 3);
+  padding-bottom: calc(var(--mantine-spacing-xl) * 3);
+  min-height: 500px; /* Ensure there's enough height to see the background */
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.root::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(250deg, rgba(0, 0, 0, 0) 0%, var(--hero-gradient-to) var(--hero-gradient-opacity));
+  z-index: 1;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: var(--mantine-breakpoint-md)) {
+  .inner {
+    flex-direction: column;
+  }
+}
+
+.content {
+  padding-top: calc(var(--mantine-spacing-xl) * 2);
+  padding-bottom: calc(var(--mantine-spacing-xl) * 2);
+  margin-right: calc(var(--mantine-spacing-xl) * 3);
+  max-width: 800px;
+}
+
+@media (max-width: var(--mantine-breakpoint-md)) {
+  .content {
+    margin-right: 0;
+    max-width: 100%;
+  }
+}
+
+.title {
+  color: var(--mantine-color-white);
+  font-family: Greycliff CF, var(--mantine-font-family);
+  font-weight: 900;
+  line-height: 1.05;
+  max-width: 800px;
+  font-size: 48px;
+}
+
+@media (max-width: var(--mantine-breakpoint-md)) {
+  .title {
+    max-width: 100%;
+    font-size: 34px;
+    line-height: 1.15;
+  }
+}
+
+.description {
+  color: var(--mantine-color-white);
+  opacity: 0.75;
+  max-width: 800px;
+}
+
+@media (max-width: var(--mantine-breakpoint-md)) {
+  .description {
+    max-width: 100%;
+  }
+}
+
+.controls {
+  margin-top: 40px;
+  display: flex;
+  gap: var(--mantine-spacing-md);
+  flex-wrap: wrap;
+}
+
+.control {
+  flex-shrink: 0;
+}
+
+@media (max-width: var(--mantine-breakpoint-md)) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+} 
