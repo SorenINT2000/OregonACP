@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Container, Text, Title, Group, Paper } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { Carousel } from '@mantine/carousel';
+import type { EmblaCarouselType as CarouselApi } from 'embla-carousel';
 import { ArrowButton } from '../ArrowButton/ArrowButton';
 import classes from './HeroCarousel.module.css';
 
@@ -31,13 +33,59 @@ export function HeroCarousel({
   gradientTo = '#062343',
   gradientOpacity = 0.7,
 }: HeroCarouselProps) {
+  const [emblaApi, setEmblaApi] = React.useState<CarouselApi | null>(null);
+  const isLargeScreen = useMediaQuery('(min-width: 1220px)');
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    // Function to start the automatic scrolling
+    const startAutoScroll = () => {
+      // Clear any existing interval first
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      
+      // Set a new interval
+      intervalRef.current = setInterval(() => {
+        if (emblaApi) {
+          emblaApi.scrollNext();
+        }
+      }, 10000);
+    };
+
+    // Start the automatic scrolling
+    startAutoScroll();
+
+    // Add event listeners for user interaction
+    const onSelect = () => {
+      // Reset the timer when user manually scrolls
+      startAutoScroll();
+    };
+
+    emblaApi.on('select', onSelect);
+    emblaApi.on('pointerDown', onSelect);
+
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      emblaApi.off('select', onSelect);
+      emblaApi.off('pointerDown', onSelect);
+    };
+  }, [emblaApi]);
+
   return (
     <Carousel
-      withIndicators
+      getEmblaApi={setEmblaApi}
+      withIndicators={isLargeScreen}
       height={500}
       slideSize="100%"
       slideGap="md"
       loop
+      withControls={isLargeScreen}
       classNames={{
         root: classes.carousel,
         indicators: classes.indicators,
@@ -92,8 +140,8 @@ export function HeroCarousel({
               </Container>
               
               {slide.bottomDescription && (
-                <Paper className={classes.bottomDescription} p="md" withBorder>
-                  <Text size="sm" c="dimmed">
+                <Paper className={classes.bottomDescription} p="lg" withBorder>
+                  <Text size="sm" c="dimmed" fw={500}>
                     {slide.bottomDescription}
                   </Text>
                 </Paper>

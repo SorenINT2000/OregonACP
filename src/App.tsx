@@ -8,6 +8,7 @@ import Events from './pages/Events';
 import AnnualMeeting from './pages/AnnualMeeting';
 import Donate from './pages/Donate';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Resources from './pages/Resources';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer/Footer';
 
@@ -31,6 +32,7 @@ function App() {
               <Route path="/annual-meeting" element={<AnnualMeeting />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/resources" element={<Resources />} />
             </Routes>
             <Footer />
           </AppShell.Main>

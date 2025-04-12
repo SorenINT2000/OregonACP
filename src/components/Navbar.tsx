@@ -68,6 +68,15 @@ export function Navbar() {
           </Button>
         </Stack>
       </Collapse>
+      <Button
+        component={Link}
+        to="/resources"
+        variant={location.pathname === '/resources' ? 'filled' : 'subtle'}
+        onClick={() => opened && toggle()}
+        fullWidth
+      >
+        Resources
+      </Button>
     </>
   );
 
@@ -86,6 +95,13 @@ export function Navbar() {
         variant={location.pathname === '/about' ? 'filled' : 'subtle'}
       >
         About
+      </Button>
+      <Button
+        component={Link}
+        to="/resources"
+        variant={location.pathname === '/resources' ? 'filled' : 'subtle'}
+      >
+        Resources
       </Button>
       <Menu position="bottom" withArrow>
         <Menu.Target>
@@ -152,7 +168,7 @@ export function Navbar() {
       <Group justify="space-between" h="100%">
         <Link to="/" style={{ textDecoration: 'none' }}>
           <Image
-            src="/logo1.jpg"
+            src="/logo_full.png"
             alt="Oregon ACP Logo"
             h={40}
             w="auto"
