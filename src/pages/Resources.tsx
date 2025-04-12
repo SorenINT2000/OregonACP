@@ -80,6 +80,7 @@ const Resources: React.FC = () => {
         backgroundImage={heroBackground}
         gradientTo="rgb(0, 71, 59)"
         gradientOpacity={0.5}
+        buttons={[{ text: 'Apply for a Scholarship', gradient: { from: 'yellow', to: 'lime' }, onClick: () => window.location.href = '/scholarship' }]}
       />
       
       <PDFViewer

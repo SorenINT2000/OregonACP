@@ -77,6 +77,15 @@ export function Navbar() {
       >
         Resources
       </Button>
+      <Button
+        component={Link}
+        to="/scholarship"
+        variant={location.pathname === '/scholarship' ? 'filled' : 'subtle'}
+        onClick={() => opened && toggle()}
+        fullWidth
+      >
+        Scholarship
+      </Button>
     </>
   );
 
@@ -130,6 +139,13 @@ export function Navbar() {
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
+      <Button
+        component={Link}
+        to="/scholarship"
+        variant={location.pathname === '/scholarship' ? 'filled' : 'subtle'}
+      >
+        Scholarship
+      </Button>
     </>
   );
 

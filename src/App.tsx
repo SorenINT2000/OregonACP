@@ -10,6 +10,7 @@ import Donate from './pages/Donate';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Resources from './pages/Resources';
 import Contact from './pages/Contact';
+import Scholarship from './pages/Scholarship';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer/Footer';
 
@@ -34,6 +35,7 @@ function App() {
               <Route path="/donate" element={<Donate />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/resources" element={<Resources />} />
+              <Route path="/scholarship" element={<Scholarship />} />
               <Route path="/contact" element={<Contact />} />
             </Routes>
             <Footer />
