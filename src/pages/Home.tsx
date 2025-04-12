@@ -11,19 +11,27 @@ const Home: React.FC = () => {
   return (
     <>
       <Hero
-        title="Welcome to the"
-        gradientText="Oregon Chapter of the American College of Physicians"
+        title="Welcome"
+        gradientText="Oregon Chapter of ACP"
         description={hero_desc}
         buttons={[
           {
-            text: "Donate",
-            onClick: () => window.open('https://store.acponline.org/ebiz/products-services/product-details/productid/337419348', '_blank'),
-            gradient: { from: 'pink', to: 'yellow' },
+            text: "Learn More",
+            onClick: () => console.log("Learn More clicked"),
+            gradient: { from: 'yellow', to: 'lime' },
             size: 'xl'
           },
           {
-            text: "Learn More",
-            onClick: () => console.log("Learn More clicked"),
+            text: "Volunteer",
+            onClick: () => console.log("Volunteer clicked"),
+            gradient: { from: 'yellow', to: 'lime' },
+            size: 'xl'
+          }
+        ]}
+        rightButtons={[
+          {
+            text: "Donate",
+            onClick: () => window.open('https://store.acponline.org/ebiz/products-services/product-details/productid/337419348', '_blank'),
             gradient: { from: 'blue', to: 'cyan' },
             size: 'xl'
           }

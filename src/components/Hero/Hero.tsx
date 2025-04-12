@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Text, Title, Group } from '@mantine/core';
 import { ArrowButton } from '../ArrowButton/ArrowButton';
+import { Divider } from '@mantine/core';
 import classes from './Hero.module.css';
 
 interface ArrowButtonProps {
@@ -15,6 +16,7 @@ interface HeroProps {
   gradientText?: string;
   description: string;
   buttons?: ArrowButtonProps[];
+  rightButtons?: ArrowButtonProps[];
   backgroundColor?: string;
   backgroundImage?: string;
   gradientTo?: string;
@@ -25,7 +27,8 @@ export function Hero({
   title,
   gradientText,
   description,
-  buttons = [{ text: 'Get started', gradient: { from: 'pink', to: 'yellow' }, size: 'xl' }],
+  buttons = [{ text: 'Get started', gradient: { from: 'yellow', to: 'lime' }, size: 'xl' }],
+  rightButtons = [],
   backgroundImage = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8&auto=format&fit=crop&w=1080&q=80',
   gradientTo = '#062343',
   gradientOpacity = 0.7,
@@ -42,17 +45,18 @@ export function Hero({
         <div className={classes.inner}>
           <div className={classes.content}>
             <Title className={classes.title}>
-              {title}{' '}
-              {gradientText && (
-                <Text
-                  component="span"
-                  inherit
-                  variant="gradient"
-                  gradient={{ from: 'pink', to: 'yellow' }}
-                >
-                  {gradientText}
-                </Text>
-              )}
+              <Text
+                component="span"
+                inherit
+                variant="gradient"
+                gradient={{ from: 'yellow', to: 'lime' }}
+              >
+                {gradientText}
+              </Text>
+              <Divider my="sm" />
+              <Title className={classes.title}>
+                {title}{' '}
+              </Title>
             </Title>
 
             <Text className={classes.description} mt={30} fw={700}>
@@ -60,16 +64,32 @@ export function Hero({
             </Text>
 
             <Group className={classes.controls}>
-              {buttons.map((button, index) => (
-                <ArrowButton
-                  key={index}
-                  text={button.text}
-                  onClick={button.onClick}
-                  gradient={button.gradient}
-                  size={button.size}
-                  className={classes.control}
-                />
-              ))}
+              <Group>
+                {buttons.map((button, index) => (
+                  <ArrowButton
+                    key={index}
+                    text={button.text}
+                    onClick={button.onClick}
+                    gradient={button.gradient}
+                    size={button.size}
+                    className={classes.control}
+                  />
+                ))}
+              </Group>
+              {rightButtons.length > 0 && (
+                <Group>
+                  {rightButtons.map((button, index) => (
+                    <ArrowButton
+                      key={index}
+                      text={button.text}
+                      onClick={button.onClick}
+                      gradient={button.gradient}
+                      size={button.size}
+                      className={classes.control}
+                    />
+                  ))}
+                </Group>
+              )}
             </Group>
           </div>
         </div>

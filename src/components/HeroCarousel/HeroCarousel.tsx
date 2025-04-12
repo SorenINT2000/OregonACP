@@ -17,18 +17,17 @@ interface CarouselSlide {
   description: string;
   backgroundImage: string;
   bottomDescription?: string;
+  buttons?: ArrowButtonProps[];
 }
 
 interface HeroCarouselProps {
   slides: CarouselSlide[];
-  buttons?: ArrowButtonProps[];
   gradientTo?: string;
   gradientOpacity?: number;
 }
 
 export function HeroCarousel({
   slides,
-  buttons = [{ text: 'Get started', gradient: { from: 'pink', to: 'yellow' }, size: 'xl' }],
   gradientTo = '#062343',
   gradientOpacity = 0.7,
 }: HeroCarouselProps) {
@@ -77,7 +76,7 @@ export function HeroCarousel({
                     </Text>
 
                     <Group className={classes.controls}>
-                      {buttons.map((button, btnIndex) => (
+                      {slide.buttons && slide.buttons.map((button, btnIndex) => (
                         <ArrowButton
                           key={btnIndex}
                           text={button.text}
