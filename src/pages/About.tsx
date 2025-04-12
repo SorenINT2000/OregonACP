@@ -15,7 +15,12 @@ const aboutSlides = [
     backgroundImage: homeHeroBg1,
     bottomDescription: "With 160,000 members worldwide, ACP is the largest medical-specialty society in the world.",
     buttons: [
-      { text: 'Join Now', onClick: () => window.open('https://www.acponline.org/join', '_blank'), gradient: { from: 'blue', to: 'cyan' } }
+      { 
+        text: 'Join Now', 
+        link: 'https://www.acponline.org/join',
+        openInNewTab: true,
+        gradient: { from: 'blue', to: 'cyan' } 
+      }
     ]
   },
   {
@@ -25,8 +30,18 @@ const aboutSlides = [
     backgroundImage: homeHeroBg2,
     bottomDescription: "Leading the profession in education, standard-setting, and knowledge sharing.",
     buttons: [
-      { text: 'Volunteer', onClick: () => window.open('https://www.acponline.org/volunteer', '_blank'), gradient: { from: 'green', to: 'teal' } },
-      { text: 'Donate', onClick: () => window.open('https://ami.jotform.com/243045776452056', '_blank'), gradient: { from: 'orange', to: 'red' } }
+      { 
+        text: 'Volunteer', 
+        link: 'https://www.acponline.org/volunteer',
+        openInNewTab: true,
+        gradient: { from: 'green', to: 'teal' } 
+      },
+      { 
+        text: 'Donate', 
+        link: 'https://ami.jotform.com/243045776452056',
+        openInNewTab: true,
+        gradient: { from: 'orange', to: 'red' } 
+      }
     ]
   },
   {

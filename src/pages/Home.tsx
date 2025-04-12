@@ -2,6 +2,7 @@ import React from 'react';
 import { Hero } from '../components/Hero/Hero';
 import { PDFViewer } from '../components/PDFViewer/PDFViewer';
 import heroBackground from '../assets/home_hero_bg.jpg';
+import { Link } from 'react-router-dom';
 
 const hero_desc: string = "The American College of Physicians (ACP) is a diverse community of internal medicine specialists and subspecialists united by a commitment to excellence. With 160,000 members in countries across the globe, ACP is the largest medical-specialty society in the world. ACP and its physician members lead the profession in education, standard-setting, and the sharing of knowledge to advance the science and practice of internal medicine.";
 
@@ -18,23 +19,22 @@ const Home: React.FC = () => {
         buttons={[
           {
             text: "Learn More",
-            onClick: () => console.log("Learn More clicked"),
-            gradient: { from: 'yellow', to: 'lime' },
-            size: 'xl'
+            link: "/about",
+            gradient: { from: 'yellow', to: 'lime' }
           },
           {
             text: "Volunteer",
-            onClick: () => console.log("Volunteer clicked"),
-            gradient: { from: 'yellow', to: 'lime' },
-            size: 'xl'
+            link: "https://www.acponline.org/volunteer",
+            openInNewTab: true,
+            gradient: { from: 'yellow', to: 'lime' }
           }
         ]}
         rightButtons={[
           {
             text: "Donate",
-            onClick: () => window.open('https://ami.jotform.com/243045776452056', '_blank'),
-            gradient: { from: 'blue', to: 'cyan' },
-            size: 'xl'
+            link: "https://ami.jotform.com/243045776452056",
+            openInNewTab: true,
+            gradient: { from: 'blue', to: 'cyan' }
           }
         ]}
         backgroundImage={heroBackground}

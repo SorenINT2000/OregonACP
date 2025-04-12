@@ -20,7 +20,11 @@ interface FormValues {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  streetAddress1: string;
+  streetAddress2: string;
+  city: string;
+  state: string;
+  zipCode: string;
   trainingProgram: string;
   trainingYear: string;
   programDirectorName: string;
@@ -38,7 +42,11 @@ const Scholarship = () => {
       name: '',
       email: '',
       phone: '',
-      address: '',
+      streetAddress1: '',
+      streetAddress2: '',
+      city: '',
+      state: '',
+      zipCode: '',
       trainingProgram: '',
       trainingYear: '',
       programDirectorName: '',
@@ -53,7 +61,10 @@ const Scholarship = () => {
       name: (value: string) => (value.length < 2 ? 'Name must be at least 2 characters' : null),
       email: (value: string) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
       phone: (value: string) => (value.length < 10 ? 'Phone number must be at least 10 digits' : null),
-      address: (value: string) => (value.length < 5 ? 'Address must be at least 5 characters' : null),
+      streetAddress1: (value: string) => (value.length < 5 ? 'Street address is required' : null),
+      city: (value: string) => (value.length < 2 ? 'City is required' : null),
+      state: (value: string) => (value.length < 2 ? 'State is required' : null),
+      zipCode: (value: string) => (/^\d{5}(-\d{4})?$/.test(value) ? null : 'Invalid ZIP code format'),
       trainingProgram: (value: string) => (value.length < 2 ? 'Training program is required' : null),
       trainingYear: (value: string) => (value.length < 4 ? 'Training year is required' : null),
       programDirectorName: (value: string) => (value.length < 2 ? 'Program director name is required' : null),
@@ -149,12 +160,37 @@ const Scholarship = () => {
               required
               {...form.getInputProps('phone')}
             />
-            <Textarea
-              label="Address"
-              placeholder="Your full address"
+            <TextInput
+              label="Street Address Line 1"
+              placeholder="Street address"
               required
-              {...form.getInputProps('address')}
+              {...form.getInputProps('streetAddress1')}
             />
+            <TextInput
+              label="Street Address Line 2"
+              placeholder="Apartment, suite, unit, etc. (optional)"
+              {...form.getInputProps('streetAddress2')}
+            />
+            <Group grow>
+              <TextInput
+                label="City"
+                placeholder="City"
+                required
+                {...form.getInputProps('city')}
+              />
+              <TextInput
+                label="State"
+                placeholder="State"
+                required
+                {...form.getInputProps('state')}
+              />
+              <TextInput
+                label="ZIP Code"
+                placeholder="ZIP code"
+                required
+                {...form.getInputProps('zipCode')}
+              />
+            </Group>
             
             <Divider my="md" />
             

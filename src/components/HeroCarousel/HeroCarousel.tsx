@@ -11,6 +11,8 @@ interface ArrowButtonProps {
   onClick?: () => void;
   gradient?: { from: string; to: string };
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  link?: string;
+  openInNewTab?: boolean;
 }
 
 interface CarouselSlide {
@@ -129,6 +131,8 @@ export function HeroCarousel({
                           key={btnIndex}
                           text={button.text}
                           onClick={button.onClick}
+                          link={button.link}
+                          openInNewTab={button.openInNewTab}
                           gradient={button.gradient}
                           className={classes.control}
                         />
