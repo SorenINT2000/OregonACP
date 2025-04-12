@@ -15,8 +15,7 @@ const aboutSlides = [
     backgroundImage: homeHeroBg1,
     bottomDescription: "With 160,000 members worldwide, ACP is the largest medical-specialty society in the world.",
     buttons: [
-      { text: 'Join Now', gradient: { from: 'blue', to: 'cyan' }, size: 'xl' as const },
-      { text: 'Learn More', gradient: { from: 'pink', to: 'yellow' }, size: 'xl' as const }
+      { text: 'Join Now', onClick: () => window.open('https://www.acponline.org/join', '_blank'), gradient: { from: 'blue', to: 'cyan' } }
     ]
   },
   {
@@ -26,8 +25,8 @@ const aboutSlides = [
     backgroundImage: homeHeroBg2,
     bottomDescription: "Leading the profession in education, standard-setting, and knowledge sharing.",
     buttons: [
-      { text: 'Volunteer', gradient: { from: 'green', to: 'teal' }, size: 'xl' as const },
-      { text: 'Donate', gradient: { from: 'orange', to: 'red' }, size: 'xl' as const }
+      { text: 'Volunteer', onClick: () => window.open('https://www.acponline.org/volunteer', '_blank'), gradient: { from: 'green', to: 'teal' } },
+      { text: 'Donate', onClick: () => window.open('https://ami.jotform.com/243045776452056', '_blank'), gradient: { from: 'orange', to: 'red' } }
     ]
   },
   {
@@ -37,8 +36,8 @@ const aboutSlides = [
     backgroundImage: homeHeroBg,
     bottomDescription: "Connect with fellow physicians and stay updated with the latest medical advancements.",
     buttons: [
-      { text: 'Events', gradient: { from: 'purple', to: 'indigo' }, size: 'xl' as const },
-      { text: 'Contact Us', gradient: { from: 'grape', to: 'violet' }, size: 'xl' as const }
+      { text: 'Events', onClick: () => window.location.href = '/events', gradient: { from: 'purple', to: 'indigo' } },
+      { text: 'Contact Us', onClick: () => window.location.href = '/contact', gradient: { from: 'grape', to: 'violet' } }
     ]
   }
 ];
@@ -56,7 +55,7 @@ const About: React.FC = () => {
     <>
       <HeroCarousel
         slides={aboutSlides}
-        gradientTo="rgb(0, 96, 80)"
+        gradientTo="rgb(0, 71, 59)"
         gradientOpacity={0.5}
       />
       <Container size="lg" py="xl">
@@ -122,7 +121,7 @@ const About: React.FC = () => {
             Advocacy and Public Policy
           </Text>
           <Text size="lg" ta="left" mb="md">
-            Our chapter champions the interests of Oregon’s internists through active participation in local and national policy dialogues. Whether it’s addressing regulatory challenges, enhancing access to quality care, or promoting ethical medical practices, we work tirelessly to make your voice heard.
+            Our chapter champions the interests of Oregon's internists through active participation in local and national policy dialogues. Whether it's addressing regulatory challenges, enhancing access to quality care, or promoting ethical medical practices, we work tirelessly to make your voice heard.
           </Text>
           <Text size="lg" ta="left" mb="md" fw={700}>
             Networking and Professional Growth

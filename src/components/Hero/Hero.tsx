@@ -76,7 +76,6 @@ export function Hero({
                       text={button.text}
                       onClick={button.onClick}
                       gradient={button.gradient}
-                      size={button.size}
                       className={classes.control}
                     />
                   ))}
@@ -89,7 +88,6 @@ export function Hero({
                         text={button.text}
                         onClick={button.onClick}
                         gradient={button.gradient}
-                        size={button.size}
                         className={classes.control}
                       />
                     ))}

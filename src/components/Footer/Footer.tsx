@@ -15,6 +15,9 @@ export function Footer() {
             <Anchor component={Link} to="/privacy-policy" size="sm">
               Privacy Policy
             </Anchor>
+            <Anchor component={Link} to="/contact" size="sm">
+              Contact Us
+            </Anchor>
           </Group>
         </Group>
       </Container>

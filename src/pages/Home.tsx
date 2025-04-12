@@ -32,14 +32,14 @@ const Home: React.FC = () => {
         rightButtons={[
           {
             text: "Donate",
-            onClick: () => window.open('https://store.acponline.org/ebiz/products-services/product-details/productid/337419348', '_blank'),
+            onClick: () => window.open('https://ami.jotform.com/243045776452056', '_blank'),
             gradient: { from: 'blue', to: 'cyan' },
             size: 'xl'
           }
         ]}
         backgroundImage={heroBackground}
-        gradientTo="rgb(0, 96, 80)"
-        gradientOpacity={0.5}
+        gradientTo="rgb(0, 71, 59)"
+        gradientOpacity={0.4}
       />
       <PDFViewer
         title="Governor's Newsletter"

@@ -78,7 +78,7 @@ const Resources: React.FC = () => {
         gradientText="Oregon Chapter of ACP"
         description="Access important documents, guidelines, and resources for Oregon Chapter members. From bylaws to newsletters, find everything you need to stay informed and engaged with our chapter's activities and governance."
         backgroundImage={heroBackground}
-        gradientTo="rgb(0, 96, 80)"
+        gradientTo="rgb(0, 71, 59)"
         gradientOpacity={0.5}
       />
       
@@ -105,7 +105,6 @@ const Resources: React.FC = () => {
         description="Connect with major healthcare organizations across Oregon, including hospital systems, health authorities, and medical centers. Access their latest updates, services, and resources to stay informed about healthcare developments in our region." 
         links={links} 
       />
-      
     </>
   );
 };

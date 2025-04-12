@@ -30,7 +30,7 @@ interface HeroCarouselProps {
 
 export function HeroCarousel({
   slides,
-  gradientTo = '#062343',
+  gradientTo = 'rgb(0, 0, 0)',
   gradientOpacity = 0.7,
 }: HeroCarouselProps) {
   const [emblaApi, setEmblaApi] = React.useState<CarouselApi | null>(null);
@@ -130,7 +130,6 @@ export function HeroCarousel({
                           text={button.text}
                           onClick={button.onClick}
                           gradient={button.gradient}
-                          size={button.size}
                           className={classes.control}
                         />
                       ))}

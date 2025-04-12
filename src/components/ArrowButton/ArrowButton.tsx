@@ -7,7 +7,6 @@ interface ArrowButtonProps {
   text: string;
   onClick?: () => void;
   gradient?: { from: string; to: string };
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   fullWidth?: boolean;
   className?: string;
 }
@@ -16,7 +15,6 @@ export function ArrowButton({
   text,
   onClick,
   gradient = { from: 'pink', to: 'yellow' },
-  size = 'xl',
   fullWidth = false,
   className,
 }: ArrowButtonProps) {
@@ -24,7 +22,7 @@ export function ArrowButton({
     <Button
       variant="gradient"
       gradient={gradient}
-      size={size}
+      size="xl"
       className={`${classes.control} ${className || ''}`}
       onClick={onClick}
       fullWidth={fullWidth}
