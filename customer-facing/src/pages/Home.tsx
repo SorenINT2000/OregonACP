@@ -34,7 +34,7 @@ const Home: React.FC = () => {
             text: "Donate",
             link: "https://ami.jotform.com/243045776452056",
             openInNewTab: true,
-            gradient: { from: 'blue', to: 'cyan' }
+            gradient: { from: 'yellow', to: 'lime' }
           }
         ]}
         backgroundImage={heroBackground}
