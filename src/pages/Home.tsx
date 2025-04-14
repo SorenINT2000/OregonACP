@@ -1,6 +1,7 @@
 import React from 'react';
 import { Hero } from '../components/Hero/Hero';
 import { PDFViewer } from '../components/PDFViewer/PDFViewer';
+import { BlogPostGrid } from '../components/BlogPostGrid/BlogPostGrid';
 import heroBackground from '../assets/home_hero_bg.jpg';
 import { Link } from 'react-router-dom';
 
@@ -45,6 +46,11 @@ const Home: React.FC = () => {
         title="Governor's Newsletter"
         description="Stay updated with the latest news from the Oregon Chapter of ACP"
         pdfPath="/assets/GovNewsletter.pdf"
+      />
+      <BlogPostGrid
+        title="Committee Updates"
+        description="Stay informed with the latest news and updates from our committees"
+        maxPosts={6}
       />
     </>
   );

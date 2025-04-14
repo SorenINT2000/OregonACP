@@ -13,35 +13,166 @@ import Contact from './pages/Contact';
 import Scholarship from './pages/Scholarship';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer/Footer';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminLogin } from './pages/admin/Login';
+import { DashboardLayout } from './pages/admin/DashboardLayout';
+import { AwardsCommittee } from './pages/admin/AwardsCommittee';
+import { PolicyCommittee } from './pages/admin/PolicyCommittee';
+import { ChapterMeetingCommittee } from './pages/admin/ChapterMeetingCommittee';
+import { Profile } from './pages/admin/Profile';
+import { DashboardHome } from './pages/admin/DashboardHome';
 
 function App() {
   return (
     <MantineProvider>
-      <Router>
-        <AppShell
-          header={{ height: 60 }}
-          padding="md"
-        >
-          <AppShell.Header>
-            <Navbar />
-          </AppShell.Header>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <Home />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/about" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <About />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/events" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <Events />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/annual-meeting" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <AnnualMeeting />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/donate" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <Donate />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/privacy-policy" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <PrivacyPolicy />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/resources" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <Resources />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/scholarship" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <Scholarship />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
+            <Route path="/contact" element={
+              <AppShell
+                header={{ height: 60 }}
+                padding="md"
+              >
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                <AppShell.Main>
+                  <Contact />
+                  <Footer />
+                </AppShell.Main>
+              </AppShell>
+            } />
 
-          <AppShell.Main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/annual-meeting" element={<AnnualMeeting />} />
-              <Route path="/donate" element={<Donate />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/resources" element={<Resources />} />
-              <Route path="/scholarship" element={<Scholarship />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
-            <Footer />
-          </AppShell.Main>
-        </AppShell>
-      </Router>
+            {/* Admin routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<DashboardHome />} />
+              <Route path="awards" element={<AwardsCommittee />} />
+              <Route path="policy" element={<PolicyCommittee />} />
+              <Route path="chapter-meeting" element={<ChapterMeetingCommittee />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
+          </Routes>
+        </Router>
+      </AuthProvider>
     </MantineProvider>
   );
 }
