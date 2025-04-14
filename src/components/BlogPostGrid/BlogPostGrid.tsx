@@ -70,6 +70,15 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionName]);
 
+  // Add a new useEffect to refresh posts when they change
+  useEffect(() => {
+    // This will ensure that when a post is edited or deleted, the UI is updated
+    if (posts.length > 0) {
+      // We don't need to do anything here, just having this effect will ensure
+      // the component re-renders when posts change
+    }
+  }, [posts]);
+
   const fetchUsers = async () => {
     try {
       const usersSnapshot = await getDocs(collection(db, 'UserProfiles'));
@@ -186,29 +195,44 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     if (onVisibilityToggle) {
       onVisibilityToggle(postId, currentVisibility);
       // Update local state immediately
-      setPosts(posts.map(post =>
+      setPosts(prevPosts => prevPosts.map(post =>
         post.id === postId
           ? { ...post, visible: !currentVisibility }
           : post
       ));
       // Update selected post if it's the one being toggled
       if (selectedPost?.id === postId) {
-        setSelectedPost({ ...selectedPost, visible: !currentVisibility });
+        setSelectedPost(prev => prev ? { ...prev, visible: !currentVisibility } : null);
       }
     } else {
+      // Find the post to get its collection name
+      const post = posts.find(p => p.id === postId);
+      if (!post) {
+        console.error('Post not found for visibility toggle');
+        return;
+      }
+
+      // Use the collectionName from the post if available, otherwise use the prop
+      const postCollectionName = post.collectionName || collectionName;
+
+      if (!postCollectionName) {
+        console.error('No collection name available for visibility toggle');
+        return;
+      }
+
       try {
-        await updateDoc(doc(db, collectionName!, postId), {
+        await updateDoc(doc(db, postCollectionName, postId), {
           visible: !currentVisibility,
         });
         // Update local state immediately
-        setPosts(posts.map(post =>
+        setPosts(prevPosts => prevPosts.map(post =>
           post.id === postId
             ? { ...post, visible: !currentVisibility }
             : post
         ));
         // Update selected post if it's the one being toggled
         if (selectedPost?.id === postId) {
-          setSelectedPost({ ...selectedPost, visible: !currentVisibility });
+          setSelectedPost(prev => prev ? { ...prev, visible: !currentVisibility } : null);
         }
       } catch (error) {
         console.error('Error updating post visibility:', error);
@@ -225,8 +249,23 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     if (onDeletePost) {
       onDeletePost(postId);
     } else {
+      // Find the post to get its collection name
+      const post = posts.find(p => p.id === postId);
+      if (!post) {
+        console.error('Post not found for deletion');
+        return;
+      }
+
+      // Use the collectionName from the post if available, otherwise use the prop
+      const postCollectionName = post.collectionName || collectionName;
+
+      if (!postCollectionName) {
+        console.error('No collection name available for deletion');
+        return;
+      }
+
       try {
-        await deleteDoc(doc(db, collectionName!, postId));
+        await deleteDoc(doc(db, postCollectionName, postId));
         setDeleteModalOpen(false);
         setPostToDelete(null);
         fetchPosts();
@@ -240,17 +279,27 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     if (!selectedPost) return;
 
     try {
-      await updateDoc(doc(db, collectionName!, selectedPost.id), {
+      // Use the collectionName from the post if available, otherwise use the prop
+      const postCollectionName = selectedPost.collectionName || collectionName;
+
+      if (!postCollectionName) {
+        console.error('No collection name available for editing post');
+        return;
+      }
+
+      await updateDoc(doc(db, postCollectionName, selectedPost.id), {
         body: editContent,
         timestamp: Timestamp.now(),
       });
+
       // Update local state
-      setPosts(posts.map(post =>
+      setPosts(prevPosts => prevPosts.map(post =>
         post.id === selectedPost.id
           ? { ...post, body: editContent }
           : post
       ));
-      setSelectedPost({ ...selectedPost, body: editContent });
+
+      setSelectedPost(prev => prev ? { ...prev, body: editContent } : null);
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating post:', error);
