@@ -2,6 +2,8 @@ import React from 'react';
 import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
 import { Editor } from '@tiptap/react';
 import { MantineColor } from '@mantine/core';
+import { Button, Group } from '@mantine/core';
+import { IconPhoto } from '@tabler/icons-react';
 
 interface RichTextEditorProps {
   editor: Editor | null;
@@ -12,6 +14,8 @@ interface RichTextEditorProps {
   showListFormatting?: boolean;
   showBlockquoteFormatting?: boolean;
   showHorizontalRuleFormatting?: boolean;
+  showImageUpload?: boolean;
+  showTextAlignment?: boolean;
 }
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
@@ -23,6 +27,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   showListFormatting = false,
   showBlockquoteFormatting = false,
   showHorizontalRuleFormatting = false,
+  showImageUpload = true,
+  showTextAlignment = true,
 }) => {
 
   // Toolbar styles
@@ -46,6 +52,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     borderRadius: '4px',
   };
 
+  const addImage = () => {
+    if (!editor) return;
+
+    const url = window.prompt('Enter image URL');
+    if (url) {
+      editor.chain().focus().insertContent({
+        type: 'image',
+        attrs: { src: url }
+      }).run();
+    }
+  };
+
   return (
     <MantineRichTextEditor
       editor={editor}
@@ -55,7 +73,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         content: contentStyle,
       }}
     >
-      <MantineRichTextEditor.Toolbar sticky stickyOffset={0}>
+      <MantineRichTextEditor.Toolbar>
         {showTextFormatting && <MantineRichTextEditor.ControlsGroup>
           <MantineRichTextEditor.Bold />
           <MantineRichTextEditor.Italic />
@@ -63,6 +81,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <MantineRichTextEditor.Strikethrough />
           <MantineRichTextEditor.ClearFormatting />
           <MantineRichTextEditor.Highlight color='yellow' />
+        </MantineRichTextEditor.ControlsGroup>}
+        {showTextAlignment && <MantineRichTextEditor.ControlsGroup>
+          <MantineRichTextEditor.AlignLeft />
+          <MantineRichTextEditor.AlignCenter />
+          <MantineRichTextEditor.AlignRight />
+          <MantineRichTextEditor.AlignJustify />
         </MantineRichTextEditor.ControlsGroup>}
         {showHeadingFormatting && <MantineRichTextEditor.ControlsGroup>
           <MantineRichTextEditor.H1 />
@@ -80,6 +104,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         {showHorizontalRuleFormatting && <MantineRichTextEditor.ControlsGroup>
           <MantineRichTextEditor.Hr />
         </MantineRichTextEditor.ControlsGroup>}
+        {showImageUpload && (
+          <MantineRichTextEditor.ControlsGroup>
+            <Button
+              variant="subtle"
+              size="xs"
+              leftSection={<IconPhoto size={16} />}
+              onClick={addImage}
+              title="Add image"
+            >
+              Image
+            </Button>
+          </MantineRichTextEditor.ControlsGroup>
+        )}
       </MantineRichTextEditor.Toolbar>
       <MantineRichTextEditor.Content />
     </MantineRichTextEditor>

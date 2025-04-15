@@ -16,6 +16,9 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
+import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
+import Placeholder from '@tiptap/extension-placeholder';
 import { RichTextEditor } from './RichTextEditor';
 import { BlogPostGrid } from './BlogPostGrid/BlogPostGrid';
 
@@ -42,7 +45,22 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, c
   const auth = getAuth(app);
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline, Highlight],
+    extensions: [
+      StarterKit,
+      Underline,
+      Highlight,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {},
+      }),
+      Placeholder.configure({
+        placeholder: 'Compose a blog post',
+      }),
+    ],
     content,
     onUpdate: ({ editor }) => {
       setContent(editor.getHTML());
@@ -50,7 +68,19 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, c
   });
 
   const editEditor = useEditor({
-    extensions: [StarterKit, Underline, Highlight],
+    extensions: [
+      StarterKit,
+      Underline,
+      Highlight,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {},
+      }),
+    ],
     content: editContent,
     onUpdate: ({ editor }) => {
       setEditContent(editor.getHTML());
@@ -143,7 +173,7 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, c
 
   return (
     <Stack>
-      <Title order={2}>{title}</Title>
+      {title && <Title order={2}>{title}</Title>}
 
       <Card withBorder p="md">
         <form onSubmit={handleSubmit}>

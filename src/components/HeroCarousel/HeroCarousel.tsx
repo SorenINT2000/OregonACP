@@ -42,19 +42,21 @@ export function HeroCarousel({
   useEffect(() => {
     if (!emblaApi) return;
 
+    let isUserInteraction = false;
+
     // Function to start the automatic scrolling
     const startAutoScroll = () => {
       // Clear any existing interval first
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      
+
       // Set a new interval
       intervalRef.current = setInterval(() => {
-        if (emblaApi) {
+        if (emblaApi && !isUserInteraction) {
           emblaApi.scrollNext();
         }
-      }, 10000);
+      }, 8000);
     };
 
     // Start the automatic scrolling
@@ -62,12 +64,21 @@ export function HeroCarousel({
 
     // Add event listeners for user interaction
     const onSelect = () => {
-      // Reset the timer when user manually scrolls
-      startAutoScroll();
+      if (isUserInteraction) {
+        // Stop the automatic scrolling when user interacts
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      }
+    };
+
+    const onPointerDown = () => {
+      isUserInteraction = true;
     };
 
     emblaApi.on('select', onSelect);
-    emblaApi.on('pointerDown', onSelect);
+    emblaApi.on('pointerDown', onPointerDown);
 
     // Cleanup function
     return () => {
@@ -75,7 +86,7 @@ export function HeroCarousel({
         clearInterval(intervalRef.current);
       }
       emblaApi.off('select', onSelect);
-      emblaApi.off('pointerDown', onSelect);
+      emblaApi.off('pointerDown', onPointerDown);
     };
   }, [emblaApi]);
 
@@ -141,7 +152,7 @@ export function HeroCarousel({
                   </div>
                 </div>
               </Container>
-              
+
               {slide.bottomDescription && (
                 <Paper className={classes.bottomDescription} p="lg" withBorder>
                   <Text size="sm" c="dimmed" fw={500}>

@@ -1,7 +1,8 @@
 - fix landing page mission statement on mobile (white background is not good)
+
 - on landing page PC, identity mission statement as mission statement
-- on landing page, add "save the date" or "weekly digest" or "What's new?"
 - on landing page, have carousel instead of hero (with current hero as first slide, and move the
+
   mission statement to be static below the carousel)
 - have mission statement have its own slide
 
@@ -16,13 +17,6 @@ for home page:
   - learn more, volunteer, donate -> welcome
 
 for about page:
-  in order:
-  - "events" + "contact us" -> "about oregon ACP"
-  - "donate" -> "our mission"
-  - "volunteer" + "join now" -> "join our community"
-
-  - turn off autocycle when manually navigate
-
   - ask amanda's opinion about what to do with the description boxes
   
   - Mission and vision should take language from ACPMissionVisionGoals

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Skeleton, Container, useMantineTheme, px, Modal, ActionIcon, Switch, Button } from '@mantine/core';
+import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, useMantineTheme, px, Modal, ActionIcon, Switch, Button, Pagination, Center } from '@mantine/core';
 import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { app } from '../../firebase';
 import classes from './BlogPostGrid.module.css';
@@ -8,7 +8,11 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
+import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
 import { RichTextEditor } from '../RichTextEditor';
+import { PostCard } from './PostCard';
+import { Skeleton } from '@mantine/core';
 
 interface BlogPost {
   id: string;
@@ -53,11 +57,23 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 6;
   const db = getFirestore(app);
-  const theme = useMantineTheme();
 
   const editEditor = useEditor({
-    extensions: [StarterKit, Underline, Highlight],
+    extensions: [
+      StarterKit,
+      Underline,
+      Highlight,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+      })
+    ],
     content: editContent,
     onUpdate: ({ editor }) => {
       setEditContent(editor.getHTML());
@@ -151,9 +167,8 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
           .filter(post => post.visible !== false) // Show posts that are visible or don't have visibility set
           .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
 
-        // Limit the number of posts if maxPosts is specified
-        const limitedPosts = maxPosts ? allPosts.slice(0, maxPosts) : allPosts;
-        setPosts(limitedPosts);
+        // Set all posts without limiting them
+        setPosts(allPosts);
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -313,128 +328,71 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     setIsEditing(true);
   };
 
-  const PostCard = ({ post }: { post: BlogPost }) => (
-    <Card
-      withBorder
-      p="md"
-      h="100%"
-      className={classes.card}
-      style={{ cursor: 'pointer' }}
-      onClick={() => setSelectedPost(post)}
-    >
-      <Stack h="100%">
-        <Group justify="space-between">
-          <Group>
-            <Avatar
-              src={getAuthorPhoto(post.authorId)}
-              radius="xl"
-              size="sm"
-              color="blue"
-            />
-            <Text fw={500} size="sm">{getAuthorName(post.authorId)}</Text>
-          </Group>
-          <Badge color={
-            post.collectionName === 'awardsBlog' ? 'blue' :
-              post.collectionName === 'policyBlog' ? 'green' :
-                'violet'
-          }>
-            {getCommitteeName(post.collectionName)}
-          </Badge>
-        </Group>
-
-        <Text size="sm" c="dimmed">
-          {post.timestamp?.toDate().toLocaleDateString()} {post.timestamp?.toDate().toLocaleTimeString()}
-        </Text>
-
-        <div
-          dangerouslySetInnerHTML={{ __html: post.body }}
-          className={classes.postContent}
-        />
-      </Stack>
-    </Card>
-  );
-
-  const LoadingSkeleton = () => {
-    const BASE_HEIGHT = 360;
-    const getSubHeight = (children: number, spacing: number) =>
-      BASE_HEIGHT / children - spacing * ((children - 1) / children);
-
-    return (
-      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
-        <Skeleton height={BASE_HEIGHT} radius="md" animate={false} />
-        <Stack>
-          <Skeleton height={getSubHeight(2, px(theme.spacing.md) as number)} radius="md" animate={false} />
-          <Skeleton height={getSubHeight(2, px(theme.spacing.md) as number)} radius="md" animate={false} />
-        </Stack>
-        <Stack>
-          <Skeleton height={getSubHeight(3, px(theme.spacing.md) as number)} radius="md" animate={false} />
-          <Skeleton height={getSubHeight(3, px(theme.spacing.md) as number)} radius="md" animate={false} />
-          <Skeleton height={getSubHeight(3, px(theme.spacing.md) as number)} radius="md" animate={false} />
-        </Stack>
-        <Skeleton height={BASE_HEIGHT} radius="md" animate={false} />
-      </SimpleGrid>
-    );
-  };
-
   const renderPosts = () => {
-    if (posts.length === 0) {
+    if (loading) {
       return (
-        <Text ta="center" size="lg" c="dimmed" py="xl">
-          No posts found. Posts will appear here once they are created.
-        </Text>
-      );
-    }
-
-    // Create a layout with different column arrangements based on post count
-    if (posts.length <= 4) {
-      // For 1-4 posts, use a simple grid
-      return (
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
-          {posts.map(post => (
-            <PostCard key={post.id} post={post} />
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+          {Array.from({ length: postsPerPage }).map((_, index) => (
+            <Skeleton key={index} height={360} width='100%' radius="md" />
           ))}
         </SimpleGrid>
       );
-    } else {
-      // For more than 4 posts, create a more dynamic layout
-      const firstPost = posts[0];
-      const lastPost = posts[posts.length - 1];
-      const middlePosts = posts.slice(1, -1);
+    }
 
-      // Split middle posts into two groups
-      const midPoint = Math.ceil(middlePosts.length / 2);
-      const leftMiddlePosts = middlePosts.slice(0, midPoint);
-      const rightMiddlePosts = middlePosts.slice(midPoint);
-
+    if (posts.length === 0) {
       return (
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
-          <PostCard post={firstPost} />
-
-          <Stack gap="md">
-            {leftMiddlePosts.map(post => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </Stack>
-
-          <Stack gap="md">
-            {rightMiddlePosts.map(post => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </Stack>
-
-          <PostCard post={lastPost} />
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+          <Card withBorder p="md">
+            <Text>No posts available.</Text>
+          </Card>
         </SimpleGrid>
       );
     }
+
+    // If we're in admin mode and maxPosts is specified, limit the posts
+    const displayPosts = isAdmin && maxPosts ? posts.slice(0, maxPosts) : posts;
+
+    // Calculate pagination
+    const indexOfLastPost = currentPage * postsPerPage;
+    const indexOfFirstPost = indexOfLastPost - postsPerPage;
+    const currentPosts = displayPosts.slice(indexOfFirstPost, indexOfLastPost);
+    const totalPages = Math.ceil(displayPosts.length / postsPerPage);
+
+    return (
+      <Stack gap="xl">
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+          {currentPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              users={users}
+              onPostClick={setSelectedPost}
+            />
+          ))}
+        </SimpleGrid>
+
+        {totalPages > 1 && (
+          <Center>
+            <Pagination
+              value={currentPage}
+              onChange={setCurrentPage}
+              total={totalPages}
+              radius="md"
+              size="md"
+            />
+          </Center>
+        )}
+      </Stack>
+    );
   };
 
   return (
     <Container size="xl" className={classes.wrapper}>
       <Stack>
-        <Title order={2} className={classes.title}>{title}</Title>
-        <Text size="lg" className={classes.description} mb="xl">{description}</Text>
+        {title && <Title order={2} className={classes.title}>{title}</Title>}
+        {description && <Text size="mb" className={classes.description}>{description}</Text>}
 
-        {loading ? <LoadingSkeleton /> : renderPosts()}
+        {renderPosts()}
 
         <Modal
           opened={selectedPost !== null}
@@ -442,7 +400,7 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
             setSelectedPost(null);
             setIsEditing(false);
           }}
-          size="lg"
+          size="80%"
           title={
             selectedPost && (
               <Group>

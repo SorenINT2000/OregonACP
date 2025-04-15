@@ -15,12 +15,8 @@ const aboutSlides = [
     backgroundImage: homeHeroBg1,
     bottomDescription: "With 160,000 members worldwide, ACP is the largest medical-specialty society in the world.",
     buttons: [
-      { 
-        text: 'Join Now', 
-        link: 'https://www.acponline.org/join',
-        openInNewTab: true,
-        gradient: { from: 'blue', to: 'cyan' } 
-      }
+      { text: 'Events', onClick: () => window.location.href = '/events', gradient: { from: 'purple', to: 'indigo' } },
+      { text: 'Contact Us', onClick: () => window.location.href = '/contact', gradient: { from: 'grape', to: 'violet' } }
     ]
   },
   {
@@ -30,17 +26,11 @@ const aboutSlides = [
     backgroundImage: homeHeroBg2,
     bottomDescription: "Leading the profession in education, standard-setting, and knowledge sharing.",
     buttons: [
-      { 
-        text: 'Volunteer', 
-        link: 'https://www.acponline.org/volunteer',
-        openInNewTab: true,
-        gradient: { from: 'green', to: 'teal' } 
-      },
-      { 
-        text: 'Donate', 
+      {
+        text: 'Donate',
         link: 'https://ami.jotform.com/243045776452056',
         openInNewTab: true,
-        gradient: { from: 'orange', to: 'red' } 
+        gradient: { from: 'orange', to: 'red' }
       }
     ]
   },
@@ -51,19 +41,54 @@ const aboutSlides = [
     backgroundImage: homeHeroBg,
     bottomDescription: "Connect with fellow physicians and stay updated with the latest medical advancements.",
     buttons: [
-      { text: 'Events', onClick: () => window.location.href = '/events', gradient: { from: 'purple', to: 'indigo' } },
-      { text: 'Contact Us', onClick: () => window.location.href = '/contact', gradient: { from: 'grape', to: 'violet' } }
+      {
+        text: 'Volunteer',
+        link: 'https://www.acponline.org/volunteer',
+        openInNewTab: true,
+        gradient: { from: 'green', to: 'teal' }
+      },
+      {
+        text: 'Join Now',
+        link: 'https://www.acponline.org/join',
+        openInNewTab: true,
+        gradient: { from: 'blue', to: 'cyan' }
+      }
     ]
   }
 ];
 
 
-const mission_and_vision: string = `The Oregon Chapter of the American College of Physicians (ACP) is dedicated to advancing internal medicine by fostering a community of excellence, collaboration, and continuous learning. Our mission is to enhance patient care and professional fulfillment for internists in Oregon through high-quality education, innovative clinical research, effective advocacy, and an unwavering commitment to diversity and inclusion.\n
-  We envision a vibrant network where every member—from established physicians and specialists to trainees and medical students—finds opportunities to grow, connect, and lead in a changing healthcare landscape.`;
+const mission_and_vision: string = `The Oregon Chapter of the American College of Physicians (ACP) is dedicated to advancing internal medicine by fostering a community of excellence, collaboration, and continuous learning. 
+
+Our Vision: "To be recognized globally as the leader in promoting quality patient care, advocacy, education and career fulfillment in internal medicine and its subspecialties."
+
+Our Mission: "To enhance the quality and effectiveness of health care by fostering excellence and professionalism in the practice of medicine."
+
+We envision a vibrant network where every member—from established physicians and specialists to trainees and medical students—finds opportunities to grow, connect, and lead in a changing healthcare landscape.`;
 
 
 const who_we_are: string = `As part of the nation's largest and most respected medical specialty organization, our chapter unites more than 1,800 members across Oregon. These include practicing internists, subspecialists, resident and fellow physicians, and medical students. We serve as the local arm of ACP, translating national policies and best practices into actionable strategies that benefit our local communities.`;
 
+const college_goals: string = `The American College of Physicians has established the following goals:
+
+• To establish and promote the highest clinical standards and ethical ideals;
+• To promote and respect diversity, inclusion, and equity in all aspects of the profession;
+• To welcome, consider and respect the many diverse voices of internal medicine and its subspecialties and work together for the benefit of the public, patients, our members, and our profession;
+• To serve the professional needs of the membership, support healthy lives for physicians, enhance career satisfaction and advance internal medicine as a career;
+• To advocate responsible positions on individual health and on public policy related to health care for the benefit of the public, patients, the medical profession, and our members;
+• To be the foremost comprehensive education and information resource for all internists;
+• To recognize excellence and distinguished contributions across internal medicine; and
+• To promote and conduct research to enhance the quality of practice, the education and continuing education of internists, and the significance of internal medicine to physicians and the public.`;
+
+const core_values: string = `Our core values guide how we act as we move toward achieving our vision:
+
+• Excellence: We strive for excellence and maintain the highest ethical and professional standards.
+• Professionalism: We work with expertise, commitment, integrity, and humility.
+• Leadership: We recognize and inspire leadership that upholds the highest standards of patient care, professionalism, education, policy development, and advocacy.
+• Compassion: We respect the dignity of others and are sensitive and empathic to their needs.
+• Inclusion: We embrace diversity and inclusion to foster engagement, belonging, and respect in all that we do.
+• Equity and Justice: We create a just and equitable culture without barriers or limits to our members, patients, and the profession.
+• Wellbeing: We cultivate a culture of caring for and about each other, and we advocate for and create systems changes that promote personal and professional fulfillment.`;
 
 const About: React.FC = () => {
   return (
@@ -82,30 +107,41 @@ const About: React.FC = () => {
             </Text>
           ))}
         </Paper>
-        
-        
+
         <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
           <Title order={2} mb="md" ta="center">Who We Are</Title>
           <Text size="lg" ta="left" mb="md">
             {who_we_are}
           </Text>
         </Paper>
-        
-        
+
+        <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
+          <Title order={2} mb="md" ta="center">College Goals</Title>
+          <Text size="lg" ta="left" mb="md">
+            {college_goals}
+          </Text>
+        </Paper>
+
+        <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
+          <Title order={2} mb="md" ta="center">Core Values</Title>
+          <Text size="lg" ta="left" mb="md">
+            {core_values}
+          </Text>
+        </Paper>
+
         <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
           <Title order={2} mb="md" ta="center">Our Values</Title>
           <Text size="lg" ta="left" mb="md">
             We are commited to:
           </Text>
           <List>
-            <List.Item icon={<IconHeart size={24}/>} mb="md"><strong>Excellence in Patient Care:</strong> We promote evidence-based practices and cutting-edge clinical education to ensure that every patient receives the best possible care.</List.Item>
-            <List.Item icon={<IconSchool size={24}/>} mb="md"><strong>Commitment to Education:</strong> Through regular scientific meetings, continuing medical education (CME) events, and professional development workshops, we support lifelong learning and skill enhancement.</List.Item>
-            <List.Item icon={<IconKey size={24}/>} mb="md"><strong>Advocacy and Leadership:</strong> Our chapter actively engages with policymakers, hospital networks, and peer organizations to champion improvements in healthcare delivery and internal medicine.</List.Item>
-            <List.Item icon={<IconMessageCircleUser size={24}/>} mb="md"><strong>Diversity, Equity, and Inclusion:</strong> Recognizing that diverse perspectives lead to innovative solutions, we are dedicated to creating an inclusive environment that reflects the community we serve.</List.Item>
-            <List.Item icon={<IconHeartHandshake size={24}/>} mb="md"><strong>Collaboration and Community:</strong> We value open communication, mentorship, and collaboration among our members, fostering a strong sense of community and shared purpose.</List.Item>
+            <List.Item icon={<IconHeart size={24} />} mb="md"><strong>Excellence in Patient Care:</strong> We promote evidence-based practices and cutting-edge clinical education to ensure that every patient receives the best possible care.</List.Item>
+            <List.Item icon={<IconSchool size={24} />} mb="md"><strong>Commitment to Education:</strong> Through regular scientific meetings, continuing medical education (CME) events, and professional development workshops, we support lifelong learning and skill enhancement.</List.Item>
+            <List.Item icon={<IconKey size={24} />} mb="md"><strong>Advocacy and Leadership:</strong> Our chapter actively engages with policymakers, hospital networks, and peer organizations to champion improvements in healthcare delivery and internal medicine.</List.Item>
+            <List.Item icon={<IconMessageCircleUser size={24} />} mb="md"><strong>Diversity, Equity, and Inclusion:</strong> Recognizing that diverse perspectives lead to innovative solutions, we are dedicated to creating an inclusive environment that reflects the community we serve.</List.Item>
+            <List.Item icon={<IconHeartHandshake size={24} />} mb="md"><strong>Collaboration and Community:</strong> We value open communication, mentorship, and collaboration among our members, fostering a strong sense of community and shared purpose.</List.Item>
           </List>
         </Paper>
-
 
         <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
           <Title order={2} mb="md" ta="center">Our History</Title>
@@ -117,13 +153,12 @@ const About: React.FC = () => {
             Over the years, our chapter has:
           </Text>
           <List>
-            <List.Item icon={<IconCalendar size={24}/>} mb="md">Hosted annual scientific meetings and CME events that bring together leading experts and emerging clinicians.</List.Item>
-            <List.Item icon={<IconMessageCircle size={24}/>} mb="md">Played a vital role in advocacy, translating the national priorities of ACP into tangible changes at the state and local levels.</List.Item>
-            <List.Item icon={<IconHeartHandshake size={24}/>} mb="md">Embraced innovative initiatives in digital learning and diversity, ensuring that every physician is equipped to meet the challenges of modern healthcare.</List.Item>
+            <List.Item icon={<IconCalendar size={24} />} mb="md">Hosted annual scientific meetings and CME events that bring together leading experts and emerging clinicians.</List.Item>
+            <List.Item icon={<IconMessageCircle size={24} />} mb="md">Played a vital role in advocacy, translating the national priorities of ACP into tangible changes at the state and local levels.</List.Item>
+            <List.Item icon={<IconHeartHandshake size={24} />} mb="md">Embraced innovative initiatives in digital learning and diversity, ensuring that every physician is equipped to meet the challenges of modern healthcare.</List.Item>
           </List>
         </Paper>
-        
-        
+
         <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
           <Title order={2} mb="md" ta="center">What We Offer</Title>
           <Text size="lg" ta="left" mb="md" fw={700}>
