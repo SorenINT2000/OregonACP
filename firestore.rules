@@ -1,29 +1,93 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow anyone to read posts
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isExecutive() {
+      return isAuthenticated() && request.auth.token.executive == true;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isUpdatingPermissions() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['permissions']);
+    }
+    
+    function isUpdatingExecutiveStatus() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['executive']);
+    }
+
+    // Users collection security rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner() || isExecutive();
+    }
+
+    // UserExecutives collection security rules
+    match /UserExecutives/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner() || (isExecutive() && isUpdatingExecutiveStatus());
+    }
+
+    // Blog posts security rules
     match /awardsBlog/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated() && (
+        isOwner() || isExecutive() || 
+        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions.awardsBlog == true
+      );
     }
     
-    // Allow anyone to read posts
     match /policyBlog/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated() && (
+        isOwner() || isExecutive() || 
+        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions.policyBlog == true
+      );
     }
     
-    // Allow anyone to read posts
     match /chapterMeetingBlog/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated() && (
+        isOwner() || isExecutive() || 
+        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions.chapterMeetingBlog == true
+      );
+    }
+    
+    // Master blog posts collection security rules
+    match /blogPosts/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (
+        isOwner() || isExecutive() || 
+        // For committee-specific posts, check if user has permission for that committee
+        (request.resource.data.organization != null && 
+         get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions[request.resource.data.organization + 'Blog'] == true)
+      );
     }
     
     // User profile security rules
     match /UserProfiles/{userId} {
-      // Allow anyone to read profiles, but only the owner can write
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Only allow authenticated users to read profiles
+      allow read: if isAuthenticated();
+      
+      // Allow users to create and update their own profile
+      allow create, update: if isOwner(userId);
+    }
+
+    // User Permissions security rules
+    match /UserPermissions/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner() || (isExecutive() && 
+        // Only allow executives to update permissions for non-executive users
+        (!get(/databases/$(database)/documents/UserExecutives/$(userId)).data.isExecutive) &&
+        // Only allow updating the permissions field
+        isUpdatingPermissions()
+      );
     }
   }
 } 

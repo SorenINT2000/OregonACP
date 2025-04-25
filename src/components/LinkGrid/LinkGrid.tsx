@@ -1,4 +1,4 @@
-import { Container, SimpleGrid, Text, Title, Paper, Button } from '@mantine/core';
+import { Container, SimpleGrid, Text, Title, Paper } from '@mantine/core';
 import classes from './LinkGrid.module.css';
 
 
@@ -11,10 +11,10 @@ interface LinkCardProps {
 
 export function LinkCard({ img, title, description, link }: LinkCardProps) {
   return (
-    <Paper 
-      shadow="sm" 
-      p="md" 
-      radius="md" 
+    <Paper
+      shadow="sm"
+      p="md"
+      radius="md"
       withBorder
       className={`${classes.card} ${img ? classes.cardWithImage : ''}`}
       style={img ? { backgroundImage: `url(${img})` } : undefined}

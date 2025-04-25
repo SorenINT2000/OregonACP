@@ -1,7 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { MantineProvider, AppShell } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 import Home from './pages/Home';
 import About from './pages/About';
 import Events from './pages/Events';
@@ -15,17 +17,19 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer/Footer';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { AdminLogin } from './pages/admin/Login';
+import { Login } from './pages/admin/Login';
 import { DashboardLayout } from './pages/admin/DashboardLayout';
-import { AwardsCommittee } from './pages/admin/AwardsCommittee';
-import { PolicyCommittee } from './pages/admin/PolicyCommittee';
-import { ChapterMeetingCommittee } from './pages/admin/ChapterMeetingCommittee';
+import AwardsCommittee from './pages/admin/AwardsCommittee';
+import PolicyCommittee from './pages/admin/PolicyCommittee';
+import ChapterMeetingCommittee from './pages/admin/ChapterMeetingCommittee';
 import { Profile } from './pages/admin/Profile';
-import { DashboardHome } from './pages/admin/DashboardHome';
+import DashboardHome from './pages/admin/DashboardHome';
+import { Permissions } from './pages/admin/Permissions';
 
 function App() {
   return (
     <MantineProvider>
+      <Notifications />
       <AuthProvider>
         <Router>
           <Routes>
@@ -158,10 +162,12 @@ function App() {
             } />
 
             {/* Admin routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/login" element={<Login />} />
             <Route path="/admin/dashboard" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <Outlet />
+                </DashboardLayout>
               </ProtectedRoute>
             }>
               <Route index element={<DashboardHome />} />
@@ -169,6 +175,7 @@ function App() {
               <Route path="policy" element={<PolicyCommittee />} />
               <Route path="chapter-meeting" element={<ChapterMeetingCommittee />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="permissions" element={<Permissions />} />
             </Route>
           </Routes>
         </Router>

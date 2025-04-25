@@ -3,7 +3,6 @@ import { Hero } from '../components/Hero/Hero';
 import { PDFViewer } from '../components/PDFViewer/PDFViewer';
 import { BlogPostGrid } from '../components/BlogPostGrid/BlogPostGrid';
 import heroBackground from '../assets/home_hero_bg.jpg';
-import { Link } from 'react-router-dom';
 
 const hero_desc: string = "The American College of Physicians (ACP) is a diverse community of internal medicine specialists and subspecialists united by a commitment to excellence. With 160,000 members in countries across the globe, ACP is the largest medical-specialty society in the world. ACP and its physician members lead the profession in education, standard-setting, and the sharing of knowledge to advance the science and practice of internal medicine.";
 
@@ -48,9 +47,9 @@ const Home: React.FC = () => {
         pdfPath="/assets/GovNewsletter.pdf"
       />
       <BlogPostGrid
-        title="Committee Updates"
+        title="Latest Updates"
         description="Stay informed with the latest news and updates from our committees"
-        maxPosts={6}
+        isAdmin={false}
       />
     </>
   );

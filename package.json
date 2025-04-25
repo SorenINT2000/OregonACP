@@ -31,10 +31,12 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.2",
+    "cors": "^2.8.5",
     "dayjs": "^1.11.13",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.6.0",
+    "firebase-admin": "^13.2.0",
     "pdfjs-dist": "^5.1.91",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -48,7 +50,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "set-owner": "ts-node -P scripts/tsconfig.json scripts/setOwnerClaim.ts"
   },
   "eslintConfig": {
     "extends": [
@@ -67,5 +70,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "ts-node": "^10.9.2"
   }
 }

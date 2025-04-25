@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, useMantineTheme, px, Modal, ActionIcon, Switch, Button, Pagination, Center } from '@mantine/core';
-import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, Modal, ActionIcon, Switch, Button, Pagination, Center } from '@mantine/core';
+import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc, limit, startAfter, where } from 'firebase/firestore';
 import { app } from '../../firebase';
 import classes from './BlogPostGrid.module.css';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -19,8 +19,8 @@ interface BlogPost {
   authorId: string;
   body: string;
   timestamp: Timestamp;
-  collectionName: string;
   visible: boolean;
+  organization: string;
 }
 
 interface UserInfo {
@@ -33,9 +33,8 @@ interface UserInfo {
 interface BlogPostGridProps {
   title?: string;
   description?: string;
-  maxPosts?: number;
   isAdmin?: boolean;
-  collectionName?: string;
+  organization?: string;
   onDeletePost?: (postId: string) => void;
   onVisibilityToggle?: (postId: string, currentVisibility: boolean) => void;
 }
@@ -43,9 +42,8 @@ interface BlogPostGridProps {
 export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   title = "Latest Updates",
   description = "Stay informed with the latest news and updates from our committees",
-  maxPosts = 8,
   isAdmin = false,
-  collectionName,
+  organization,
   onDeletePost,
   onVisibilityToggle
 }) => {
@@ -58,6 +56,10 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [firstVisible, setFirstVisible] = useState<any>(null);
+  const [collectionLastVisible, setCollectionLastVisible] = useState<Record<string, any>>({});
   const postsPerPage = 6;
   const db = getFirestore(app);
 
@@ -82,18 +84,11 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
 
   useEffect(() => {
     fetchPosts();
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collectionName]);
-
-  // Add a new useEffect to refresh posts when they change
-  useEffect(() => {
-    // This will ensure that when a post is edited or deleted, the UI is updated
-    if (posts.length > 0) {
-      // We don't need to do anything here, just having this effect will ensure
-      // the component re-renders when posts change
+    if (isAdmin) {
+      fetchUsers();
     }
-  }, [posts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization, isAdmin]);
 
   const fetchUsers = async () => {
     try {
@@ -120,62 +115,70 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     try {
       setLoading(true);
 
-      if (collectionName) {
-        // Fetch posts from a specific collection (for admin dashboard)
-        const postsQuery = query(collection(db, collectionName), orderBy('timestamp', 'desc'));
-        const postsSnapshot = await getDocs(postsQuery);
+      let postsQuery;
+      const postsPerPage = 6;
 
-        const fetchedPosts = postsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          collectionName
-        })) as BlogPost[];
-
-        setPosts(fetchedPosts);
+      if (organization) {
+        postsQuery = query(
+          collection(db, 'blogPosts'),
+          where('organization', '==', organization),
+          orderBy('timestamp', 'desc'),
+          limit(postsPerPage)
+        );
       } else {
-        // Fetch posts from all collections (for homepage)
-        const awardsQuery = query(collection(db, 'awardsBlog'), orderBy('timestamp', 'desc'));
-        const policyQuery = query(collection(db, 'policyBlog'), orderBy('timestamp', 'desc'));
-        const chapterMeetingQuery = query(collection(db, 'chapterMeetingBlog'), orderBy('timestamp', 'desc'));
-
-        const [awardsSnapshot, policySnapshot, chapterMeetingSnapshot] = await Promise.all([
-          getDocs(awardsQuery),
-          getDocs(policyQuery),
-          getDocs(chapterMeetingQuery)
-        ]);
-
-        const awardsPosts = awardsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          collectionName: 'awardsBlog'
-        })) as BlogPost[];
-
-        const policyPosts = policySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          collectionName: 'policyBlog'
-        })) as BlogPost[];
-
-        const chapterMeetingPosts = chapterMeetingSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          collectionName: 'chapterMeetingBlog'
-        })) as BlogPost[];
-
-        // Combine and sort all posts by timestamp, filtering out invisible posts
-        const allPosts = [...awardsPosts, ...policyPosts, ...chapterMeetingPosts]
-          .filter(post => post.visible !== false) // Show posts that are visible or don't have visibility set
-          .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
-
-        // Set all posts without limiting them
-        setPosts(allPosts);
+        postsQuery = query(
+          collection(db, 'blogPosts'),
+          orderBy('timestamp', 'desc'),
+          limit(postsPerPage)
+        );
       }
+
+      if (currentPage > 1 && lastVisible) {
+        postsQuery = query(
+          postsQuery,
+          startAfter(lastVisible)
+        );
+      }
+
+      const snapshot = await getDocs(postsQuery);
+      const fetchedPosts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as BlogPost[];
+
+      const visiblePosts = isAdmin
+        ? fetchedPosts
+        : fetchedPosts.filter(post => post.visible);
+
+      setPosts(visiblePosts);
+      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+
+      const countQuery = organization
+        ? query(
+          collection(db, 'blogPosts'),
+          where('organization', '==', organization)
+        )
+        : query(collection(db, 'blogPosts'));
+
+      const countSnapshot = await getDocs(countQuery);
+      setTotalPosts(countSnapshot.size);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setLastVisible(null);
+    setFirstVisible(null);
+    fetchPosts();
+  }, [organization]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [currentPage]);
 
   const getAuthorName = (authorId: string) => {
     const user = users[authorId];
@@ -193,13 +196,15 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     return null;
   };
 
-  const getCommitteeName = (collectionName: string) => {
-    switch (collectionName) {
-      case 'awardsBlog':
+  const getCommitteeName = (organization: string | undefined) => {
+    if (!organization) return 'Unknown Committee';
+
+    switch (organization) {
+      case 'awards':
         return 'Awards Committee';
-      case 'policyBlog':
+      case 'policy':
         return 'Policy Committee';
-      case 'chapterMeetingBlog':
+      case 'chapterMeeting':
         return 'Chapter Meeting Committee';
       default:
         return 'Unknown Committee';
@@ -227,18 +232,12 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
         return;
       }
 
-      // Use the collectionName from the post if available, otherwise use the prop
-      const postCollectionName = post.collectionName || collectionName;
-
-      if (!postCollectionName) {
-        console.error('No collection name available for visibility toggle');
-        return;
-      }
-
       try {
-        await updateDoc(doc(db, postCollectionName, postId), {
+        // Update in the master collection
+        await updateDoc(doc(db, 'blogPosts', postId), {
           visible: !currentVisibility,
         });
+
         // Update local state immediately
         setPosts(prevPosts => prevPosts.map(post =>
           post.id === postId
@@ -271,16 +270,10 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
         return;
       }
 
-      // Use the collectionName from the post if available, otherwise use the prop
-      const postCollectionName = post.collectionName || collectionName;
-
-      if (!postCollectionName) {
-        console.error('No collection name available for deletion');
-        return;
-      }
-
       try {
-        await deleteDoc(doc(db, postCollectionName, postId));
+        // Delete from the master collection
+        await deleteDoc(doc(db, 'blogPosts', postId));
+
         setDeleteModalOpen(false);
         setPostToDelete(null);
         fetchPosts();
@@ -294,15 +287,8 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     if (!selectedPost) return;
 
     try {
-      // Use the collectionName from the post if available, otherwise use the prop
-      const postCollectionName = selectedPost.collectionName || collectionName;
-
-      if (!postCollectionName) {
-        console.error('No collection name available for editing post');
-        return;
-      }
-
-      await updateDoc(doc(db, postCollectionName, selectedPost.id), {
+      // Update in the master collection
+      await updateDoc(doc(db, 'blogPosts', selectedPost.id), {
         body: editContent,
         timestamp: Timestamp.now(),
       });
@@ -329,48 +315,10 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   };
 
   const renderPosts = () => {
-    if (loading) {
-      return (
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-          {Array.from({ length: postsPerPage }).map((_, index) => (
-            <Skeleton key={index} height={360} width='100%' radius="md" />
-          ))}
-        </SimpleGrid>
-      );
-    }
-
-    if (posts.length === 0) {
-      return (
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-          <Card withBorder p="md">
-            <Text>No posts available.</Text>
-          </Card>
-        </SimpleGrid>
-      );
-    }
-
-    // If we're in admin mode and maxPosts is specified, limit the posts
-    const displayPosts = isAdmin && maxPosts ? posts.slice(0, maxPosts) : posts;
-
-    // Calculate pagination
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = displayPosts.slice(indexOfFirstPost, indexOfLastPost);
-    const totalPages = Math.ceil(displayPosts.length / postsPerPage);
+    const totalPages = Math.ceil(totalPosts / postsPerPage);
 
     return (
       <Stack gap="xl">
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-          {currentPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              users={users}
-              onPostClick={setSelectedPost}
-            />
-          ))}
-        </SimpleGrid>
-
         {totalPages > 1 && (
           <Center>
             <Pagination
@@ -379,8 +327,42 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
               total={totalPages}
               radius="md"
               size="md"
+              disabled={loading}
             />
           </Center>
+        )}
+
+        {loading ? (
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+            {Array.from({ length: postsPerPage }).map((_, index) => (
+              <Skeleton key={index} height='360px' width='420px' radius="md" />
+            ))}
+          </SimpleGrid>
+        ) : posts.length === 0 ? (
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+            <Card withBorder p="md">
+              <Text>No posts available.</Text>
+            </Card>
+          </SimpleGrid>
+        ) : (
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+            {posts.map((post) => {
+              const postWithOrganization = {
+                ...post,
+                organization: post.organization
+              };
+
+              return (
+                <PostCard
+                  key={post.id}
+                  post={postWithOrganization}
+                  users={users}
+                  onPostClick={setSelectedPost}
+                  isAdmin={isAdmin}
+                />
+              );
+            })}
+          </SimpleGrid>
         )}
       </Stack>
     );
@@ -402,7 +384,7 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
           }}
           size="80%"
           title={
-            selectedPost && (
+            selectedPost && isAdmin && (
               <Group>
                 <Avatar
                   src={getAuthorPhoto(selectedPost.authorId)}
@@ -424,11 +406,11 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
             <Stack>
               <Group justify="apart">
                 <Badge color={
-                  selectedPost.collectionName === 'awardsBlog' ? 'blue' :
-                    selectedPost.collectionName === 'policyBlog' ? 'green' :
+                  selectedPost.organization === 'awards' ? 'blue' :
+                    selectedPost.organization === 'policy' ? 'green' :
                       'violet'
                 }>
-                  {getCommitteeName(selectedPost.collectionName)}
+                  {getCommitteeName(selectedPost.organization)}
                 </Badge>
 
                 {isAdmin && (

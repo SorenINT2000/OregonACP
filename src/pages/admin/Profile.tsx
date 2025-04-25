@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Title,
   Text,
@@ -13,12 +13,16 @@ import {
   Modal,
   Group,
   Box,
-  ActionIcon
+  ActionIcon,
+  Progress,
+  Tabs,
+  FileButton
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconEdit } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck, IconEdit, IconUpload, IconPhoto } from '@tabler/icons-react';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { getAuth, updateProfile } from 'firebase/auth';
-import { app } from '../../firebase';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { app, storage } from '../../firebase';
 import classes from './Profile.module.css';
 
 export const Profile: React.FC = () => {
@@ -31,15 +35,30 @@ export const Profile: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [role, setRole] = useState('');
-  const [organization, setOrganization] = useState('');
-  const [position, setPosition] = useState('');
-  const [bio, setBio] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>('upload');
+  const [file, setFile] = useState<File | null>(null);
+  const resetRef = useRef<() => void>(null);
 
   const db = getFirestore(app);
   const auth = getAuth(app);
+
+  // Function to delete a profile picture from storage
+  const deleteProfilePictureFromStorage = async (url: string) => {
+    try {
+      // Only attempt to delete if the URL is from our Firebase Storage
+      if (url.includes('firebasestorage.googleapis.com')) {
+        // Extract the path from the URL
+        const storageRef = ref(storage, url);
+        await deleteObject(storageRef);
+        console.log('Successfully deleted old profile picture from storage');
+      }
+    } catch (err) {
+      console.error('Error deleting old profile picture from storage:', err);
+      // Don't throw the error - we don't want to block the profile update if deletion fails
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,16 +75,25 @@ export const Profile: React.FC = () => {
           const userData = userDoc.data();
           console.log('Initial user document in Firestore:', userData);
 
-          setDisplayName(userData.displayName || '');
-          setEmail(userData.email || '');
-          setPhone(userData.phone || '');
-          setPhotoURL(userData.photoURL || '');
-          setRole(userData.role || '');
-          setOrganization(userData.organization || '');
-          setPosition(userData.position || '');
-          setBio(userData.bio || '');
+          setDisplayName(userData.displayName || auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || '');
+          setPhotoURL(userData.photoURL || auth.currentUser.photoURL || '');
         } else {
-          console.log('User document does not exist in Firestore');
+          console.log('User document does not exist in Firestore, creating new document');
+
+          // Create a new user document with default values
+          const newUserData = {
+            displayName: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || '',
+            email: auth.currentUser.email || '',
+            photoURL: auth.currentUser.photoURL || '',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+
+          // Set the document in Firestore
+          await setDoc(userDocRef, newUserData);
+
+          // Update local state with the new user data
+          setDisplayName(newUserData.displayName);
         }
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -115,6 +143,9 @@ export const Profile: React.FC = () => {
         img.onerror = () => reject(new Error('Invalid image URL'));
       });
 
+      // Store the old photo URL before updating
+      const oldPhotoURL = photoURL;
+
       // Update the user's profile picture in Firebase Auth
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
@@ -126,6 +157,11 @@ export const Profile: React.FC = () => {
         await updateDoc(userDocRef, {
           photoURL: imageUrl
         });
+
+        // Delete the old profile picture from storage if it exists and is from our storage
+        if (oldPhotoURL) {
+          await deleteProfilePictureFromStorage(oldPhotoURL);
+        }
 
         // Verify the update was successful
         await verifyUserDocument();
@@ -140,6 +176,88 @@ export const Profile: React.FC = () => {
     } catch (err) {
       console.error('Error updating profile picture:', err);
       setUrlError('Failed to update profile picture. Please check the URL and try again.');
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!file || !auth.currentUser) return;
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+      setError(null);
+
+      // Store the old photo URL before updating
+      const oldPhotoURL = photoURL;
+
+      // Create a storage reference
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage, `profile_images/${auth.currentUser.uid}/${fileName}`);
+
+      // Upload the file
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      // Listen for upload progress
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error('Error uploading file:', error);
+          setError('Failed to upload image. Please try again.');
+          setUploading(false);
+        },
+        async () => {
+          // Upload completed successfully
+          try {
+            // Get the download URL
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+            // Ensure user is still logged in
+            if (!auth.currentUser) {
+              throw new Error('User is no longer logged in');
+            }
+
+            // Update the user's profile picture in Firebase Auth
+            await updateProfile(auth.currentUser, {
+              photoURL: downloadURL
+            });
+
+            // Update the Firestore document
+            const userDocRef = doc(db, 'UserProfiles', auth.currentUser.uid);
+            await updateDoc(userDocRef, {
+              photoURL: downloadURL
+            });
+
+            // Delete the old profile picture from storage if it exists and is from our storage
+            if (oldPhotoURL) {
+              await deleteProfilePictureFromStorage(oldPhotoURL);
+            }
+
+            // Update the local state
+            setPhotoURL(downloadURL);
+            setFile(null);
+            setUploading(false);
+            setModalOpen(false);
+
+            // Reset the file input
+            if (resetRef.current) {
+              resetRef.current();
+            }
+          } catch (error) {
+            console.error('Error updating profile with uploaded image:', error);
+            setError('Failed to update profile with uploaded image.');
+            setUploading(false);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error in file upload process:', error);
+      setError('An unexpected error occurred during upload.');
+      setUploading(false);
     }
   };
 
@@ -190,6 +308,9 @@ export const Profile: React.FC = () => {
     if (!auth.currentUser) return;
 
     try {
+      // Store the old photo URL before clearing
+      const oldPhotoURL = photoURL;
+
       // Update the user's profile picture in Firebase Auth
       await updateProfile(auth.currentUser, {
         photoURL: null
@@ -200,6 +321,11 @@ export const Profile: React.FC = () => {
       await updateDoc(userDocRef, {
         photoURL: null
       });
+
+      // Delete the old profile picture from storage if it exists and is from our storage
+      if (oldPhotoURL) {
+        await deleteProfilePictureFromStorage(oldPhotoURL);
+      }
 
       // Verify the update was successful
       await verifyUserDocument();
@@ -286,51 +412,126 @@ export const Profile: React.FC = () => {
           setModalOpen(false);
           setImageUrl('');
           setUrlError(null);
+          setFile(null);
+          setUploadProgress(0);
+          setUploading(false);
+          if (resetRef.current) {
+            resetRef.current();
+          }
         }}
         title="Update Profile Picture"
         size="md"
       >
         <Stack>
-          <TextInput
-            label="Image URL"
-            placeholder="https://example.com/image.jpg"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            error={urlError}
-          />
-          <Text size="xs" c="dimmed">
-            Enter a URL to an image that is publicly accessible
-          </Text>
+          <Tabs value={activeTab} onChange={setActiveTab}>
+            <Tabs.List>
+              <Tabs.Tab value="upload" leftSection={<IconUpload size={16} />}>
+                Upload Image
+              </Tabs.Tab>
+              <Tabs.Tab value="url" leftSection={<IconPhoto size={16} />}>
+                Image URL
+              </Tabs.Tab>
+            </Tabs.List>
 
-          <Alert icon={<IconAlertCircle size={16} />} title="Note" color="blue">
-            Image uploading is currently disabled. Please use an image URL instead.
-          </Alert>
-
-          <Group justify="space-between" mt="xl">
-            <Group>
-              {photoURL && (
-                <Button
-                  variant="subtle"
-                  color="red"
-                  onClick={handleClearProfilePicture}
+            <Tabs.Panel value="upload" pt="md">
+              <Stack>
+                <FileButton
+                  resetRef={resetRef}
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={setFile}
+                  disabled={uploading}
                 >
-                  Clear Picture
-                </Button>
-              )}
-            </Group>
+                  {(props) => (
+                    <Button {...props} leftSection={<IconUpload size={16} />}>
+                      Select Image
+                    </Button>
+                  )}
+                </FileButton>
 
-            <Group>
-              <Button variant="subtle" onClick={() => setModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleImageUrlSubmit}
-                loading={loading}
-              >
-                Use Image URL
-              </Button>
-            </Group>
-          </Group>
+                {file && (
+                  <Text size="sm">
+                    Selected file: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                  </Text>
+                )}
+
+                {uploading && (
+                  <Stack>
+                    <Text size="sm">Uploading: {uploadProgress.toFixed(0)}%</Text>
+                    <Progress value={uploadProgress} size="sm" />
+                  </Stack>
+                )}
+
+                <Group justify="space-between" mt="xl">
+                  <Group>
+                    {photoURL && (
+                      <Button
+                        variant="subtle"
+                        color="red"
+                        onClick={handleClearProfilePicture}
+                        disabled={uploading}
+                      >
+                        Clear Picture
+                      </Button>
+                    )}
+                  </Group>
+
+                  <Group>
+                    <Button variant="subtle" onClick={() => setModalOpen(false)} disabled={uploading}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleFileUpload}
+                      loading={uploading}
+                      disabled={!file || uploading}
+                    >
+                      Upload Image
+                    </Button>
+                  </Group>
+                </Group>
+              </Stack>
+            </Tabs.Panel>
+
+            <Tabs.Panel value="url" pt="md">
+              <Stack>
+                <TextInput
+                  label="Image URL"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  error={urlError}
+                />
+                <Text size="xs" c="dimmed">
+                  Enter a URL to an image that is publicly accessible
+                </Text>
+
+                <Group justify="space-between" mt="xl">
+                  <Group>
+                    {photoURL && (
+                      <Button
+                        variant="subtle"
+                        color="red"
+                        onClick={handleClearProfilePicture}
+                      >
+                        Clear Picture
+                      </Button>
+                    )}
+                  </Group>
+
+                  <Group>
+                    <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleImageUrlSubmit}
+                      loading={loading}
+                    >
+                      Use Image URL
+                    </Button>
+                  </Group>
+                </Group>
+              </Stack>
+            </Tabs.Panel>
+          </Tabs>
         </Stack>
       </Modal>
     </Stack>

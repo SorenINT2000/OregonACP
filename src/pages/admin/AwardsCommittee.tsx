@@ -1,11 +1,11 @@
 import React from 'react';
 import { CommitteeDashboard } from '../../components/CommitteeDashboard';
 
-export const AwardsCommittee: React.FC = () => {
+export default function AwardsCommittee() {
   return (
     <CommitteeDashboard
-      title="Awards Committee Dashboard"
-      collectionName="awardsBlog"
+      title="Awards Committee"
+      organization="awards"
     />
   );
-}; 
+} 

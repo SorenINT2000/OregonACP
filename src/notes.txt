@@ -17,33 +17,8 @@ for home page:
   - learn more, volunteer, donate -> welcome
 
 for about page:
-  - ask amanda's opinion about what to do with the description boxes
-  
-  - Mission and vision should take language from ACPMissionVisionGoals
   - pic of governor + governor's welcome
-  - pic of ex director + content:
-  
-  Mike Oechsner MBA CAE CMP, Vice President of Team Development with Association Management Inc. (AMI), became Executive Director for Oregon ACP in 2023.
-  AMI is a company that supports over 50 non-profit organizations in their work.
-
-  Mike is a dedicated servant leader with over two decades experience in the non-profit sector.
-  He is an experienced leader of conferences and events with over 3,000 attendees, has had success impacting funding at
-    state legislature level, and is a respected leader and advisory board member with the Washington Office of the Superintendent of Public Instruction.
-
-  Mike earned his Bachelor's Degree in Education and completed student teaching.
-  While going to college, he spent time working for a non-profit organization and found his passion for non-profit work.
-  He is still (and always will be) a lifelong learner and teacher at heart.
-  He later went on to earn his Master's Degree in Business Administration. 
-
-  In the middle of his career, Mike also spent time in the hospitality sector -- with time as Senior Sales Manager for Martin Resorts, a small family of independently
-    owned hotels on California's Central Coast,as well as time with Red Lion Hotels in Convention Sales.
-  An avid scuba diver, a huge fan of anything near water, and a die hard Seahawks fan - his spare time is often spent outdoors.
-  Something Mike is very proud of is the memorial scholarship that was established for his father in 1991 after his father's death from a heart attack.
-  Over 30 years later, the perpetual scholarship has awarded over $200,000 to support student athletes and still holds an annual benefit slowpitch tournament each year.
-  Mike leads the board for the scholarship and manages the IRS and administrative projects that go hand in hand with the non profit organization.
-  
   - move "who we are" to carousel's "About Oregon ACP" (1800 -> 1700)
-  - our values gets language from ACPMissionVisionGoals
   
 for resources:
   - remove "apply for scholarship" button

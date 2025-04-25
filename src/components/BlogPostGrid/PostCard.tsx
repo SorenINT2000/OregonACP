@@ -1,13 +1,14 @@
 import React from 'react';
 import { Card, Group, Avatar, Badge, Stack, Text } from '@mantine/core';
 import classes from './BlogPostGrid.module.css';
+import { Timestamp } from 'firebase/firestore';
 
 interface BlogPost {
   id: string;
   authorId: string;
   body: string;
-  timestamp: any; // Using any for now, but you might want to use the proper Firestore Timestamp type
-  collectionName: string;
+  timestamp: Timestamp;
+  organization: string;
   visible: boolean;
 }
 
@@ -22,9 +23,12 @@ interface PostCardProps {
   post: BlogPost;
   users: Record<string, UserInfo>;
   onPostClick: (post: BlogPost) => void;
+  isAdmin?: boolean;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, users, onPostClick }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, users, onPostClick, isAdmin = false }) => {
+  console.log('PostCard rendering with post:', post);
+
   const getAuthorName = (authorId: string) => {
     const user = users[authorId];
     if (user) {
@@ -41,13 +45,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post, users, onPostClick }) 
     return null;
   };
 
-  const getCommitteeName = (collectionName: string) => {
-    switch (collectionName) {
-      case 'awardsBlog':
+  const getCommitteeName = (organization: string | undefined) => {
+    if (!organization) return 'Unknown Committee';
+
+    switch (organization) {
+      case 'awards':
         return 'Awards Committee';
-      case 'policyBlog':
+      case 'policy':
         return 'Policy Committee';
-      case 'chapterMeetingBlog':
+      case 'chapterMeeting':
         return 'Chapter Meeting Committee';
       default:
         return 'Unknown Committee';
@@ -60,26 +66,30 @@ export const PostCard: React.FC<PostCardProps> = ({ post, users, onPostClick }) 
       p="md"
       h={360}
       className={classes.card}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', width: '420px', height: '360px' }}
       onClick={() => onPostClick(post)}
     >
       <Stack h="100%" gap="xs">
         <Group justify="space-between">
-          <Group>
-            <Avatar
-              src={getAuthorPhoto(post.authorId)}
-              radius="xl"
-              size="sm"
-              color="blue"
-            />
-            <Text fw={500} size="sm">{getAuthorName(post.authorId)}</Text>
-          </Group>
+          {isAdmin ? (
+            <Group>
+              <Avatar
+                src={getAuthorPhoto(post.authorId)}
+                radius="xl"
+                size="sm"
+                color="blue"
+              />
+              <Text fw={500} size="sm">{getAuthorName(post.authorId)}</Text>
+            </Group>
+          ) : (
+            <div></div> // Empty div to maintain layout
+          )}
           <Badge color={
-            post.collectionName === 'awardsBlog' ? 'blue' :
-              post.collectionName === 'policyBlog' ? 'green' :
+            post.organization === 'awards' ? 'blue' :
+              post.organization === 'policy' ? 'green' :
                 'violet'
           }>
-            {getCommitteeName(post.collectionName)}
+            {getCommitteeName(post.organization)}
           </Badge>
         </Group>
 

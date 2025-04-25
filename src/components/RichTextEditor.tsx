@@ -1,8 +1,7 @@
 import React from 'react';
 import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
 import { Editor } from '@tiptap/react';
-import { MantineColor } from '@mantine/core';
-import { Button, Group } from '@mantine/core';
+import { Button } from '@mantine/core';
 import { IconPhoto } from '@tabler/icons-react';
 
 interface RichTextEditorProps {
