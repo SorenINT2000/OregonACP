@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Title, Group, Badge, Paper } from '@mantine/core';
+import { Container, Title, Group, Badge, Paper, Button, Modal, TextInput, Stack } from '@mantine/core';
 import { useAuth } from '../../contexts/AuthContext';
 import { PermissionsTable } from '../../components/PermissionsTable';
 import { notifications } from '@mantine/notifications';
 import { collection, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../firebase';
+import { getAuth, createUserWithEmailAndPassword, sendSignInLinkToEmail, sendPasswordResetEmail } from 'firebase/auth';
+import { setDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 // Define interfaces
 interface UserProfile {
@@ -36,6 +39,9 @@ export const Permissions: React.FC = () => {
   const [executiveUsers, setExecutiveUsers] = useState<UserProfile[]>([]);
   const [nonExecutiveUsers, setNonExecutiveUsers] = useState<UserProfile[]>([]);
   const [userPermissions, setUserPermissions] = useState<{ [key: string]: UserPermissions }>({});
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
   const functions = getFunctions();
 
   const fetchPermissions = async () => {
@@ -147,6 +153,84 @@ export const Permissions: React.FC = () => {
     setLoading(false);
   };
 
+  const handleInviteUser = async () => {
+    if (!inviteEmail) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please enter an email address',
+        color: 'red'
+      });
+      return;
+    }
+
+    setInviteLoading(true);
+
+    try {
+      // Use the Cloud Function to create the user
+      const functions = getFunctions();
+      const createUser = httpsCallable(functions, 'createUser');
+
+      try {
+        const result = await createUser({ email: inviteEmail });
+        console.log('Create user result:', result);
+      } catch (error: any) {
+        console.error('Error creating user:', error);
+
+        // Check if the error is because the user already exists
+        if (error.message && error.message.includes('already exists')) {
+          notifications.show({
+            title: 'Error',
+            message: 'A user with this email already exists',
+            color: 'red'
+          });
+          setInviteLoading(false);
+          return;
+        }
+
+        // For other errors, show a more detailed message
+        notifications.show({
+          title: 'Error',
+          message: `Failed to create user: ${error.message || 'Unknown error'}`,
+          color: 'red'
+        });
+        setInviteLoading(false);
+        return;
+      }
+
+      // Send password reset email
+      const auth = getAuth();
+      try {
+        await sendPasswordResetEmail(auth, inviteEmail);
+
+        notifications.show({
+          title: 'Success',
+          message: 'Password reset email sent successfully',
+          color: 'green'
+        });
+
+        setInviteModalOpen(false);
+        setInviteEmail('');
+      } catch (error: any) {
+        console.error('Error sending password reset email:', error);
+
+        notifications.show({
+          title: 'Warning',
+          message: 'User created but failed to send password reset email.',
+          color: 'yellow'
+        });
+      }
+    } catch (error) {
+      console.error('Error in invite user process:', error);
+      notifications.show({
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Failed to process invitation',
+        color: 'red'
+      });
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   useEffect(() => {
     // setLoading(true);
     fetchPermissions();
@@ -157,11 +241,22 @@ export const Permissions: React.FC = () => {
     <Container size="xl">
       <Group justify="space-between" mb="md">
         <Title order={1}>Permissions Management</Title>
-        {(isOwner && (
-          <Badge size="lg" color="yellow">Owner Access</Badge>
-        )) || (isExecutive && (
-          <Badge size="lg" color="purple">Executive Access</Badge>
-        ))}
+        <Group>
+          {(isExecutive || isOwner) && (
+            <Button
+              onClick={() => setInviteModalOpen(true)}
+              variant="filled"
+              color="blue"
+            >
+              Invite User
+            </Button>
+          )}
+          {(isOwner && (
+            <Badge size="lg" color="yellow">Owner Access</Badge>
+          )) || (isExecutive && (
+            <Badge size="lg" color="purple">Executive Access</Badge>
+          ))}
+        </Group>
       </Group>
       <Paper shadow="xs" p="md">
         <PermissionsTable
@@ -172,6 +267,34 @@ export const Permissions: React.FC = () => {
           onRefresh={fetchPermissions}
         />
       </Paper>
+
+      <Modal
+        opened={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        title="Invite New User"
+        centered
+      >
+        <Stack>
+          <TextInput
+            label="Email Address"
+            placeholder="Enter email address"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            required
+          />
+          <Group justify="flex-end">
+            <Button variant="outline" onClick={() => setInviteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInviteUser}
+              loading={inviteLoading}
+            >
+              Send Invitation
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }; 

@@ -41,3 +41,13 @@ for scholarship:
   - option to apply, that takes you to the online form
 
 place scholarship info in Resources above 
+
+add storage for blog post pictures
+
+executives can sign up new users
+
+change the profile pictures of users in permission table to  be larger + vertically fill the row more
+
+fix pagination for visible/invisible posts
+
+Add database triggers to automatically delete Firestore documents when a user is deleted from Auth

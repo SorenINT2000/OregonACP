@@ -99,7 +99,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         <Stack>
           <Button
             component={Link}
-            to="/admin/dashboard"
+            to="/admin"
             variant="filled"
             fullWidth
             mb="md"
@@ -110,7 +110,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <Text fw={700} size="lg" mb="md">Committees</Text>
           <Button
             component={Link}
-            to="/admin/dashboard/awards"
+            to="/admin/awards"
             variant="subtle"
             fullWidth
             rightSection={
@@ -126,7 +126,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </Button>
           <Button
             component={Link}
-            to="/admin/dashboard/policy"
+            to="/admin/policy"
             variant="subtle"
             fullWidth
             rightSection={
@@ -142,7 +142,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </Button>
           <Button
             component={Link}
-            to="/admin/dashboard/chapter-meeting"
+            to="/admin/chapter-meeting"
             variant="subtle"
             fullWidth
             rightSection={
@@ -162,7 +162,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <Text fw={700} size="lg" mb="md">Account</Text>
           <Button
             component={Link}
-            to="/admin/dashboard/profile"
+            to="/admin/profile"
             variant="subtle"
             fullWidth
           >
@@ -170,7 +170,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </Button>
           <Button
             component={Link}
-            to="/admin/dashboard/permissions"
+            to="/admin/permissions"
             variant="subtle"
             fullWidth
           >

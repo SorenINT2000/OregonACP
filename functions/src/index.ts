@@ -1,6 +1,10 @@
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import cors from 'cors';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 admin.initializeApp();
 
@@ -224,6 +228,189 @@ export const updateUserPermissions = onCall(async (request) => {
     throw new HttpsError(
       'internal',
       'An error occurred while updating user permissions.'
+    );
+  }
+});
+
+// Add an HTTP version of the inviteUser function with CORS support
+export const inviteUserHttp = onRequest((req, res) => {
+  return corsHandler(req, res, async () => {
+    // Check if the request is a preflight request
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    try {
+      // Get the authorization token from the request header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).send('Unauthorized');
+        return;
+      }
+
+      const idToken = authHeader.split('Bearer ')[1];
+      
+      // Verify the token
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      
+      // Check if the user is an executive or owner
+      const isExecutive = decodedToken.executive === true;
+      const isOwner = decodedToken.owner === true;
+      
+      if (!isExecutive && !isOwner) {
+        res.status(403).send('Permission Denied: Only executives and owners can invite new users.');
+        return;
+      }
+
+      // Get the email from the request body
+      const { email } = req.body;
+      if (!email || typeof email !== 'string') {
+        res.status(400).send('Invalid Argument: The function requires an email parameter.');
+        return;
+      }
+
+      // Check if user already exists
+      try {
+        await admin.auth().getUserByEmail(email);
+        res.status(409).send('Already Exists: A user with this email already exists.');
+        return;
+      } catch (error: any) {
+        // If the error is not "user not found", rethrow it
+        if (error.code !== 'auth/user-not-found') {
+          throw error;
+        }
+        // If we get here, the user doesn't exist, which is what we want
+      }
+
+      // Create the user with a temporary password
+      const userRecord = await admin.auth().createUser({
+        email,
+        emailVerified: false,
+        password: Math.random().toString(36).slice(-8) // Temporary random password
+      });
+
+      // Create initial user profile
+      const db = admin.firestore();
+      await db.collection('UserProfiles').doc(userRecord.uid).set({
+        email,
+        displayName: email.split('@')[0], // Use part before @ as initial display name
+        photoURL: '',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Create initial permissions document
+      await db.collection('UserPermissions').doc(userRecord.uid).set({
+        permissions: {
+          awardsBlog: false,
+          policyBlog: false,
+          chapterMeetingBlog: false
+        }
+      });
+
+      // Generate a password reset link
+      const frontendUrl = process.env.FRONTEND_URL;
+      if (!frontendUrl) {
+        throw new Error('FRONTEND_URL environment variable is not set.');
+      }
+
+      const actionCodeSettings = {
+        url: `${frontendUrl}/admin/set-password`,
+        handleCodeInApp: true
+      };
+
+      // Generate and send the password reset email
+      await admin.auth().generatePasswordResetLink(email, actionCodeSettings);
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      res.status(500).send('Internal Server Error: An error occurred while inviting the user.');
+    }
+  });
+});
+
+export const createUser = onCall(async (request) => {
+  // Check if the request is made by an authenticated user
+  if (!request.auth) {
+    throw new HttpsError(
+      'unauthenticated',
+      'The function must be called while authenticated.'
+    );
+  }
+
+  // Check if the user has executive or owner permissions using custom claims
+  const isExecutive = request.auth.token.executive === true;
+  const isOwner = request.auth.token.owner === true;
+  
+  if (!isExecutive && !isOwner) {
+    throw new HttpsError(
+      'permission-denied',
+      'Only executive users and owners can create new users.'
+    );
+  }
+
+  const { email } = request.data;
+
+  if (!email) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Email is required.'
+    );
+  }
+
+  try {
+    // Check if user already exists
+    try {
+      await admin.auth().getUserByEmail(email);
+      throw new HttpsError(
+        'already-exists',
+        'A user with this email already exists.'
+      );
+    } catch (error: any) {
+      if (error.code !== 'auth/user-not-found') {
+        throw error;
+      }
+    }
+
+    // Create the user
+    const userRecord = await admin.auth().createUser({
+      email,
+      emailVerified: false,
+      password: Math.random().toString(36).slice(-8) // Temporary random password
+    });
+
+    // Create user profile
+    await admin.firestore().collection('UserProfiles').doc(userRecord.uid).set({
+      email,
+      displayName: email.split('@')[0],
+      photoURL: '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Create initial permissions
+    await admin.firestore().collection('UserPermissions').doc(userRecord.uid).set({
+      permissions: {
+        awardsBlog: false,
+        policyBlog: false,
+        chapterMeetingBlog: false
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw new HttpsError(
+      'internal',
+      'An error occurred while creating the user.'
     );
   }
 }); 

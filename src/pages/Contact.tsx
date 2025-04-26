@@ -50,7 +50,7 @@ const Contact: React.FC = () => {
               <IconMail size={24} />
               <div>
                 <Text fw={500}>Email</Text>
-                <Anchor href="mailto:oregonacp@aminc.org">oregonacp@aminc.org</Anchor>
+                <Anchor href="mailto:office@oregonacp.org">office@oregonacp.org</Anchor>
               </div>
             </Group>
             <Group>

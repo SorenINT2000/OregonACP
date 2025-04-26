@@ -15,7 +15,7 @@ export const Login: React.FC = () => {
     try {
       setError('');
       await signIn(email, password);
-      navigate('/admin/dashboard');
+      navigate('/admin');
     } catch (err) {
       setError('Failed to sign in. Please check your credentials.');
     }

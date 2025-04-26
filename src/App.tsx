@@ -25,6 +25,7 @@ import ChapterMeetingCommittee from './pages/admin/ChapterMeetingCommittee';
 import { Profile } from './pages/admin/Profile';
 import DashboardHome from './pages/admin/DashboardHome';
 import { Permissions } from './pages/admin/Permissions';
+import SetPassword from './pages/admin/SetPassword';
 
 function App() {
   return (
@@ -163,7 +164,8 @@ function App() {
 
             {/* Admin routes */}
             <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin/dashboard" element={
+            <Route path="/admin/set-password" element={<SetPassword />} />
+            <Route path="/admin" element={
               <ProtectedRoute>
                 <DashboardLayout>
                   <Outlet />

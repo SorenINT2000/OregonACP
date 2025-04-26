@@ -7,7 +7,7 @@ import {
   IconCalendar,
   IconMessageCircle,
   IconCheckbox,
-  IconTie,
+  IconStethoscope,
   IconStar,
   IconFlag,
   IconScale,
@@ -233,7 +233,7 @@ const About: React.FC = () => {
             <List.Item icon={<IconStar size={24} />} mb="md">
               <Text><strong>Excellence:</strong> We strive for excellence and maintain the highest ethical and professional standards.</Text>
             </List.Item>
-            <List.Item icon={<IconTie size={24} />} mb="md">
+            <List.Item icon={<IconStethoscope size={24} />} mb="md">
               <Text><strong>Professionalism:</strong> We work with expertise, commitment, integrity, and humility.</Text>
             </List.Item>
             <List.Item icon={<IconFlag size={24} />} mb="md">

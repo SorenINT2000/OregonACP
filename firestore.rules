@@ -21,43 +21,6 @@ service cloud.firestore {
     function isUpdatingExecutiveStatus() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['executive']);
     }
-
-    // Users collection security rules
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner() || isExecutive();
-    }
-
-    // UserExecutives collection security rules
-    match /UserExecutives/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner() || (isExecutive() && isUpdatingExecutiveStatus());
-    }
-
-    // Blog posts security rules
-    match /awardsBlog/{document=**} {
-      allow read: if true;
-      allow write: if isAuthenticated() && (
-        isOwner() || isExecutive() || 
-        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions.awardsBlog == true
-      );
-    }
-    
-    match /policyBlog/{document=**} {
-      allow read: if true;
-      allow write: if isAuthenticated() && (
-        isOwner() || isExecutive() || 
-        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions.policyBlog == true
-      );
-    }
-    
-    match /chapterMeetingBlog/{document=**} {
-      allow read: if true;
-      allow write: if isAuthenticated() && (
-        isOwner() || isExecutive() || 
-        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions.chapterMeetingBlog == true
-      );
-    }
     
     // Master blog posts collection security rules
     match /blogPosts/{document=**} {

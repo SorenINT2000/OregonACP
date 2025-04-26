@@ -16,11 +16,12 @@ import {
   ActionIcon,
   Progress,
   Tabs,
-  FileButton
+  FileButton,
+  Divider
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconEdit, IconUpload, IconPhoto } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck, IconEdit, IconUpload, IconPhoto, IconLock } from '@tabler/icons-react';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { getAuth, updateProfile } from 'firebase/auth';
+import { getAuth, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { app, storage } from '../../firebase';
 import classes from './Profile.module.css';
@@ -39,10 +40,33 @@ export const Profile: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>('upload');
   const [file, setFile] = useState<File | null>(null);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const resetRef = useRef<() => void>(null);
 
   const db = getFirestore(app);
   const auth = getAuth(app);
+
+  // Function to handle password reset
+  const handlePasswordReset = async () => {
+    if (!auth.currentUser || !auth.currentUser.email) {
+      setError('No email address found for your account');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setResetEmailSent(false);
+
+      await sendPasswordResetEmail(auth, auth.currentUser.email);
+      setResetEmailSent(true);
+    } catch (err) {
+      console.error('Error sending password reset email:', err);
+      setError('Failed to send password reset email. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Function to delete a profile picture from storage
   const deleteProfilePictureFromStorage = async (url: string) => {
@@ -365,6 +389,12 @@ export const Profile: React.FC = () => {
         </Alert>
       )}
 
+      {resetEmailSent && (
+        <Alert icon={<IconCheck size={16} />} title="Password Reset Email Sent" color="green">
+          A password reset email has been sent to your email address. Please check your inbox and follow the instructions to reset your password.
+        </Alert>
+      )}
+
       <Card withBorder p="md" style={{ maxWidth: '500px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit}>
           <Stack>
@@ -404,6 +434,30 @@ export const Profile: React.FC = () => {
             </Button>
           </Stack>
         </form>
+      </Card>
+
+      <Card withBorder p="md" style={{ maxWidth: '500px', margin: '0 auto' }}>
+        <Stack>
+          <Title order={3}>Security</Title>
+          <Text size="sm" c="dimmed">
+            Manage your account security settings
+          </Text>
+
+          <Divider my="sm" />
+
+          <Button
+            leftSection={<IconLock size={16} />}
+            onClick={handlePasswordReset}
+            loading={loading}
+            variant="outline"
+          >
+            Reset Password
+          </Button>
+
+          <Text size="xs" c="dimmed">
+            Click this button to receive a password reset link via email
+          </Text>
+        </Stack>
       </Card>
 
       <Modal
