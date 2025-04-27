@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, Modal, ActionIcon, Switch, Button, Pagination, Center, Popover } from '@mantine/core';
-import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc, limit, startAfter, endBefore, where, getCountFromServer, getDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import React, { useState, useEffect, useRef } from 'react';
+import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, Modal, ActionIcon, Switch, Button, Pagination, Center, Popover, Loader, Divider } from '@mantine/core';
+import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc, limit, where, getCountFromServer, getDoc } from 'firebase/firestore';
 import { app } from '../../firebase';
 import classes from './BlogPostGrid.module.css';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconEdit, IconTrash, IconEye, IconEyeClosed } from '@tabler/icons-react';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -43,6 +42,14 @@ interface BlogPostGridProps {
   resetRefreshTrigger?: () => void;
 }
 
+// Committee gradient colors
+const committeeGradients = {
+  awards: { from: 'blue', to: 'cyan' },
+  policy: { from: 'green', to: 'lime' },
+  chapterMeeting: { from: 'violet', to: 'grape' },
+  default: { from: 'blue', to: 'green' }
+};
+
 export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   title = "Latest Updates",
   description = "Stay informed with the latest news and updates from our committees",
@@ -71,14 +78,10 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editContent, setEditContent] = useState('');
+  const [visibilityLoading, setVisibilityLoading] = useState(false);
 
   // Firestore
   const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  const isAuthenticated = () => {
-    return auth.currentUser !== null;
-  };
 
   const editor = useEditor({
     extensions: [
@@ -109,11 +112,13 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
       firstVisible.current = null;
       fetchPosts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
   // Handle regular pagination and filter changes
   useEffect(() => {
     fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db, currentPage, organization, showInvisiblePosts, editor]);
 
   // Editor content updates
@@ -122,6 +127,24 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
       editor.commands.setContent(selectedPost.body);
     }
   }, [selectedPost, editor]);
+
+  // Add Ctrl+S shortcut for saving when in edit mode
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 's' && isEditing) {
+        event.preventDefault(); // Prevent browser save dialog
+        handleEdit();
+      }
+    };
+
+    if (isEditing) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isEditing]);
 
   const fetchPosts = async () => {
     try {
@@ -218,6 +241,9 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     }
 
     try {
+      // Start loading animation
+      setVisibilityLoading(true);
+
       // Update in Firestore
       await updateDoc(doc(db, 'blogPosts', selectedPost.id), {
         visible: newVisibility,
@@ -234,6 +260,9 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
       setSelectedPost(prev => prev ? { ...prev, visible: newVisibility } : null);
     } catch (error) {
       console.error('Error updating post visibility:', error);
+    } finally {
+      // Stop loading animation
+      setVisibilityLoading(false);
     }
   };
 
@@ -348,92 +377,139 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
           <Modal
             opened={!!selectedPost}
             onClose={() => setSelectedPost(null)}
-            title="Post Details"
             size="xl"
-          >
-            <Stack>
-              <Group justify="flex-start">
+            styles={{
+              header: {
+                paddingBottom: 0,
+                width: '100%'
+              }
+            }}
+            title={
+              <Stack gap="5">
+                <Group>
+                  <Text
+                    variant="gradient"
+                    gradient={
+                      committeeGradients[selectedPost?.organization as keyof typeof committeeGradients] ||
+                      committeeGradients.default
+                    }
+                    fw={1000}
+                    size="xl"
+                  >
+                    {getCommitteeName(selectedPost?.organization)} Update
+                  </Text>
 
-                {/* Author Info */}
-                {showAuthorInfo && (
-                  <Group>
-                    <Avatar
-                      src={authors[selectedPost?.authorId as string]?.photoURL || undefined}
-                      radius="xl"
-                      size="sm"
-                      color="blue"
-                    />
-                    <Text fw={500}>{authors[selectedPost?.authorId as string]?.displayName || authors[selectedPost?.authorId as string]?.email || 'Unknown User'}</Text>
-                  </Group>
-                )}
 
-                {/* Committee Badge */}
-                <Badge color={
-                  selectedPost?.organization === 'awards' ? 'blue' :
-                    selectedPost?.organization === 'policy' ? 'green' :
-                      'violet'
-                }>
-                  {getCommitteeName(selectedPost?.organization)}
-                </Badge>
-              </Group>
-
-              {/* Controls */}
-              {showControls &&
+                  {/* Timestamp */}
+                  <Text size="sm" c="dimmed">
+                    {selectedPost?.timestamp?.toDate().toLocaleDateString()} {selectedPost?.timestamp?.toDate().toLocaleTimeString()}
+                  </Text>
+                </Group>
                 <Group justify="flex-start">
-                  {/* Visibility Toggle */}
-                  <Switch
-                    label="Visible"
-                    checked={selectedPost.visible}
-                    onChange={(event) => handleVisibilityToggle(event.currentTarget.checked)}
-                  />
+                  {/* Author Info */}
+                  {showAuthorInfo && (
+                    <Group>
+                      <Avatar
+                        src={authors[selectedPost?.authorId as string]?.photoURL || undefined}
+                        radius="xl"
+                        size="sm"
+                        color="blue"
+                      />
+                      <Text fw={500}>{authors[selectedPost?.authorId as string]?.displayName || authors[selectedPost?.authorId as string]?.email || 'Unknown User'}</Text>
+                    </Group>
+                  )}
 
-                  {/* Edit Button */}
-                  <ActionIcon
-                    variant="light"
-                    color="blue"
-                    onClick={() => startEditing(selectedPost)}
-                  >
-                    <IconEdit size={16} />
-                  </ActionIcon>
-
-                  {/* Delete Button */}
-                  <Popover
-                    opened={deletePopoverOpen}
-                    onChange={setDeletePopoverOpen}
-                    position="bottom"
-                    withArrow
-                    shadow="md"
-                  >
-                    <Popover.Target>
+                  {/* Controls */}
+                  {showControls &&
+                    <>
+                      {/* Edit Button */}
                       <ActionIcon
                         variant="light"
-                        color="red"
-                        onClick={() => setDeletePopoverOpen(true)}
+                        color="blue"
+                        onClick={() => startEditing(selectedPost)}
                       >
-                        <IconTrash size={16} />
+                        <IconEdit size={16} />
                       </ActionIcon>
-                    </Popover.Target>
-                    <Popover.Dropdown>
-                      <Stack>
-                        <Text>Are you sure you want to delete this post?</Text>
-                        <Group justify="flex-end">
-                          <Button variant="subtle" onClick={() => setDeletePopoverOpen(false)}>Cancel</Button>
-                          <Button color="red" onClick={handleDelete}>Delete</Button>
-                        </Group>
-                      </Stack>
-                    </Popover.Dropdown>
-                  </Popover>
-                </Group>}
 
-              {/* Timestamp */}
-              <Text size="sm" c="dimmed">
-                {selectedPost?.timestamp?.toDate().toLocaleDateString()} {selectedPost?.timestamp?.toDate().toLocaleTimeString()}
-              </Text>
+                      {/* Delete Button */}
+                      <Popover
+                        opened={deletePopoverOpen}
+                        onChange={setDeletePopoverOpen}
+                        position="bottom"
+                        withArrow
+                        shadow="md"
+                      >
+                        <Popover.Target>
+                          <ActionIcon
+                            variant="light"
+                            color="red"
+                            onClick={() => setDeletePopoverOpen(true)}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Popover.Target>
+                        <Popover.Dropdown>
+                          <Stack>
+                            <Text>Are you sure you want to delete this post?</Text>
+                            <Group justify="flex-end">
+                              <Button variant="subtle" onClick={() => setDeletePopoverOpen(false)}>Cancel</Button>
+                              <Button color="red" onClick={handleDelete}>Delete</Button>
+                            </Group>
+                          </Stack>
+                        </Popover.Dropdown>
+                      </Popover>
+
+                      {/* Visibility Toggle with loading indicator */}
+                      <Group gap="xs">
+                        <Switch
+                          checked={selectedPost.visible}
+                          onChange={(event) => handleVisibilityToggle(event.currentTarget.checked)}
+                          disabled={visibilityLoading}
+                          size="md"
+                          color="green"
+                          onLabel={<IconEye size={16} stroke={2.5} color="var(--mantine-color-white)" />}
+                          offLabel={<IconEyeClosed size={16} stroke={2.5} color="var(--mantine-color-orange-6)" />}
+                        />
+                        {visibilityLoading && <Loader size="xs" />}
+                        {!visibilityLoading && !selectedPost.visible && (
+                          <Badge color="orange" variant="light">Hidden</Badge>
+                        )}
+                        {!visibilityLoading && selectedPost.visible && (
+                          <Badge color="green" variant="light">Visible</Badge>
+                        )}
+                      </Group>
+                    </>}
+                </Group>
+
+                {/* Gradient-colored divider */}
+                <Divider
+                  py="0"
+                  style={{
+                    background: `linear-gradient(to right, var(--mantine-color-${(committeeGradients[selectedPost?.organization as keyof typeof committeeGradients] ||
+                      committeeGradients.default).from
+                      }-6), var(--mantine-color-${(committeeGradients[selectedPost?.organization as keyof typeof committeeGradients] ||
+                        committeeGradients.default).to
+                      }-6))`,
+                    height: '2px',
+                    width: '100%'
+                  }}
+                />
+              </Stack>
+            }
+          >
+            <Stack>
 
               {/* Post Content */}
               {isEditing &&
                 <>
-                  <RichTextEditor editor={editor} />
+                  <RichTextEditor
+                    editor={editor}
+                    showTextFormatting={true}
+                    showHeadingFormatting={true}
+                    showListFormatting={true}
+                    showBlockquoteFormatting={true}
+                    showHorizontalRuleFormatting={true}
+                  />
 
                   {/* // Save/Cancel Edit Buttons */}
                   <Group>

@@ -33,8 +33,7 @@ service cloud.firestore {
     // BlogPosts collection rules
     match /blogPosts/{postId} {
       // Non-authenticated users can only read visible posts, but without authorId
-      allow read: if !isAuthenticated() && resource.data.visible == true && 
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorId']);
+      allow read: if !isAuthenticated() && resource.data.visible == true;
       // Authenticated users can read all posts
       allow read: if isAuthenticated();
       // Only owners and executives can create/update/delete posts

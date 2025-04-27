@@ -27,13 +27,6 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClick, enableEdit }) => {
-  const getAuthorName = () => {
-  };
-
-  const getAuthorPhoto = () => {
-    return;
-  };
-
   const getCommitteeName = (organization: string | undefined) => {
     if (!organization) return 'Unknown Committee';
 
@@ -49,13 +42,28 @@ export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClic
     }
   };
 
+  // Determine if the post is visible or not
+  const isVisible = post.visible !== false; // Default to true if undefined
+
+  // Apply different styles for invisible posts
+  const cardStyle = {
+    cursor: 'pointer',
+    width: '420px',
+    height: '360px',
+    // Add dashed border and tan background for invisible posts
+    ...(isVisible ? {} : {
+      border: '2px dashed #ccc',
+      backgroundColor: '#f5f5dc', // Tan background
+    })
+  };
+
   return (
     <Card
       withBorder
       p="md"
       h={360}
       className={classes.card}
-      style={{ cursor: 'pointer', width: '420px', height: '360px' }}
+      style={cardStyle}
       onClick={() => onPostClick(post)}
     >
       <Stack h="100%" gap="xs">
@@ -72,18 +80,26 @@ export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClic
                 {authorInfo.displayName || authorInfo.email?.split('@')[0] || 'Unknown User'}
               </Text>
             </Group>)}
-          <Badge color={
-            post.organization === 'awards' ? 'blue' :
-              post.organization === 'policy' ? 'green' :
-                'violet'
-          }>
-            {getCommitteeName(post.organization)}
-          </Badge>
+          <Group>
+            <Badge color={
+              post.organization === 'awards' ? 'blue' :
+                post.organization === 'policy' ? 'green' :
+                  'violet'
+            }>
+              {getCommitteeName(post.organization)}
+            </Badge>
+          </Group>
         </Group>
 
-        <Text size="sm" c="dimmed">
-          {post.timestamp?.toDate().toLocaleDateString()} {post.timestamp?.toDate().toLocaleTimeString()}
-        </Text>
+        <Group justify="space-between">
+          <Text size="sm" c="dimmed">
+            {post.timestamp?.toDate().toLocaleDateString()} {post.timestamp?.toDate().toLocaleTimeString()}
+          </Text>
+          {/* Add visibility indicator badge if the post is invisible */}
+          {!isVisible && (
+            <Badge color="orange" variant="light">Hidden</Badge>
+          )}
+        </Group>
 
         <div
           dangerouslySetInnerHTML={{ __html: post.body }}

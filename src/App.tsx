@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-import { MantineProvider, AppShell } from '@mantine/core';
+import { MantineProvider, AppShell, createTheme } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
@@ -27,9 +27,23 @@ import DashboardHome from './pages/admin/DashboardHome';
 import { Permissions } from './pages/admin/Permissions';
 import SetPassword from './pages/admin/SetPassword';
 
+// Custom theme
+const theme = createTheme({
+  cursorType: 'pointer',
+  components: {
+    Switch: {
+      styles: {
+        root: {
+          cursor: 'pointer',
+        },
+      },
+    },
+  },
+});
+
 function App() {
   return (
-    <MantineProvider>
+    <MantineProvider theme={theme}>
       <Notifications />
       <AuthProvider>
         <Router>
