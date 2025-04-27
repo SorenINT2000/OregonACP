@@ -247,8 +247,21 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
       // Delete from collection
       await deleteDoc(doc(db, 'blogPosts', selectedPost.id));
 
-      // Update local state
-      setPosts(prevPosts => prevPosts.filter(p => p.id !== selectedPost.id));
+      // Handle edge case: last post on last page
+      const isLastPage = currentPage === Math.ceil(postCount / postsPerPage);
+      const isLastPostOnPage = posts.length === 1;
+
+      if (isLastPage && isLastPostOnPage && currentPage > 1) {
+        // Go to previous page
+        setCurrentPage(prev => prev - 1);
+      } else {
+        // Update local state immediately
+        setPosts(prevPosts => prevPosts.filter(p => p.id !== selectedPost.id));
+
+        // Refetch posts for current page to fill in the gap
+        fetchPosts();
+      }
+
       setSelectedPost(null);
       setDeletePopoverOpen(false);
     } catch (error) {
