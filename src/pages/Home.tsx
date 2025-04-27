@@ -49,7 +49,7 @@ const Home: React.FC = () => {
       <BlogPostGrid
         title="Latest Updates"
         description="Stay informed with the latest news and updates from our committees"
-        isAdmin={false}
+        showInvisiblePosts={false}
       />
     </>
   );

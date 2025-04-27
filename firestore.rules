@@ -1,45 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
+    // Helper function to check if user is an owner
+    function isOwner() {
+      return isAuthenticated() && request.auth.token.owner == true;
+    }
+
+    // Helper function to check if user is an executive
     function isExecutive() {
       return isAuthenticated() && request.auth.token.executive == true;
     }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+
+    // Helper function to check if user has permission for a specific committee
+    function hasCommitteePermission(committee) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions[committee + 'Blog'] == true;
     }
-    
-    function isUpdatingPermissions() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['permissions']);
-    }
-    
-    function isUpdatingExecutiveStatus() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['executive']);
-    }
-    
-    // Master blog posts collection security rules
-    match /blogPosts/{document=**} {
-      allow read: if true;
-      allow write: if isAuthenticated() && (
-        isOwner() || isExecutive() || 
-        // For committee-specific posts, check if user has permission for that committee
-        (request.resource.data.organization != null && 
-         get(/databases/$(database)/documents/UserPermissions/$(request.auth.uid)).data.permissions[request.resource.data.organization + 'Blog'] == true)
-      );
-    }
-    
-    // User profile security rules
+
+    // UserProfiles collection rules
     match /UserProfiles/{userId} {
-      // Only allow authenticated users to read profiles
       allow read: if isAuthenticated();
-      
-      // Allow users to create and update their own profile
-      allow create, update: if isOwner(userId);
+      // Allow users to write to their own profile, and owners to write to any profile
+      allow write: if request.auth.uid == userId || isOwner();
+    }
+
+    // BlogPosts collection rules
+    match /blogPosts/{postId} {
+      // Non-authenticated users can only read visible posts, but without authorId
+      allow read: if !isAuthenticated() && resource.data.visible == true && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorId']);
+      // Authenticated users can read all posts
+      allow read: if isAuthenticated();
+      // Only owners and executives can create/update/delete posts
+      allow create: if isOwner() || isExecutive();
+      allow update, delete: if isOwner() || 
+        (isExecutive() && hasCommitteePermission(resource.data.organization));
     }
 
     // User Permissions security rules
@@ -49,7 +50,7 @@ service cloud.firestore {
         // Only allow executives to update permissions for non-executive users
         (!get(/databases/$(database)/documents/UserExecutives/$(userId)).data.isExecutive) &&
         // Only allow updating the permissions field
-        isUpdatingPermissions()
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['permissions'])
       );
     }
   }

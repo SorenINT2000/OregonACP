@@ -51,7 +51,7 @@ export function Hero({
         <Container size="lg">
           <div className={classes.inner}>
             <div className={classes.content}>
-              <Title className={classes.title}>
+              <div className={classes.title}>
                 <Text
                   component="span"
                   inherit
@@ -64,7 +64,7 @@ export function Hero({
                 <Title className={classes.title}>
                   {title}{' '}
                 </Title>
-              </Title>
+              </div>
 
               <Text className={classes.description} mt={30} fw={700}>
                 {description}
@@ -101,7 +101,7 @@ export function Hero({
                 )}
               </Group>
             </div>
-            
+
             {!isMobile && rightDescription && (
               <div className={classes.rightContent}>
                 <Paper className={classes.quotePaper} p="md" radius="md">
@@ -114,7 +114,7 @@ export function Hero({
           </div>
         </Container>
       </div>
-      
+
       {isMobile && rightDescription && (
         <Container size="lg" mt="xl">
           <Paper className={classes.mobileQuotePaper} p="xl" radius="md" withBorder>

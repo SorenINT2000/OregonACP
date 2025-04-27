@@ -7,7 +7,8 @@ import {
   Stack,
   Modal,
   Accordion,
-  Text
+  Text,
+  Container
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
@@ -26,27 +27,15 @@ import { RichTextEditor } from './RichTextEditor';
 import { BlogPostGrid } from './BlogPostGrid/BlogPostGrid';
 import { useAuth } from '../contexts/AuthContext';
 
-interface BlogPost {
-  id: string;
-  authorId: string;
-  body: string;
-  timestamp: Timestamp;
-  visible: boolean;
-  organization: string;
-}
-
 interface CommitteeDashboardProps {
   title: string;
   organization: string;
 }
 
 export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, organization }) => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [content, setContent] = useState('');
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [composeContent, setComposeContent] = useState('');
   const [canPost, setCanPost] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const db = getFirestore(app);
   const auth = getAuth(app);
   const { currentUser } = useAuth();
@@ -62,35 +51,14 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, o
       Image.configure({
         inline: false,
         allowBase64: false,
-        HTMLAttributes: {},
       }),
       Placeholder.configure({
         placeholder: 'Compose a blog post',
       }),
     ],
-    content,
+    content: composeContent,
     onUpdate: ({ editor }) => {
-      setContent(editor.getHTML());
-    },
-  });
-
-  const editEditor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Highlight,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-      Image.configure({
-        inline: false,
-        allowBase64: false,
-        HTMLAttributes: {},
-      }),
-    ],
-    content: editContent,
-    onUpdate: ({ editor }) => {
-      setEditContent(editor.getHTML());
+      setComposeContent(editor.getHTML());
     },
   });
 
@@ -130,51 +98,28 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, o
     }
   };
 
-  const fetchPosts = async () => {
-    const querySnapshot = await getDocs(
-      query(
-        collection(db, 'blogPosts'),
-        where('organization', '==', organization),
-        orderBy('timestamp', 'desc')
-      )
-    );
-
-    const fetchedPosts = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as BlogPost[];
-
-    setPosts(fetchedPosts);
-  };
-
   useEffect(() => {
-    fetchPosts();
     checkPermissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization, currentUser]);
-
-  useEffect(() => {
-    if (editingPost) {
-      editEditor?.commands.setContent(editingPost.body);
-    }
-  }, [editingPost, editEditor]);
 
   const handleSubmit = async () => {
     if (!auth.currentUser) return;
-    if (!content.trim()) return;
+    if (!composeContent.trim()) return;
 
     try {
       await addDoc(collection(db, 'blogPosts'), {
         authorId: auth.currentUser.uid,
-        body: content,
+        body: composeContent,
         timestamp: Timestamp.now(),
         visible: true,
         organization: organization
       });
 
-      setContent('');
+      setComposeContent('');
       editor?.commands.setContent('');
-      await fetchPosts(); // Refresh posts after creating a new one
+      // Increment refresh trigger to cause a refresh
+      setRefreshTrigger(prev => prev + 1);
+
       notifications.show({
         title: 'Success',
         message: 'Post created successfully',
@@ -190,45 +135,9 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, o
     }
   };
 
-  const handleDelete = async (postId: string) => {
-    try {
-      await deleteDoc(doc(db, 'blogPosts', postId));
-      fetchPosts();
-    } catch (error) {
-      console.error('Error deleting post:', error);
-    }
-  };
-
-  const handleVisibilityToggle = async (postId: string, currentVisibility: boolean) => {
-    try {
-      await updateDoc(doc(db, 'blogPosts', postId), {
-        visible: !currentVisibility,
-      });
-      fetchPosts();
-    } catch (error) {
-      console.error('Error updating post visibility:', error);
-    }
-  };
-
-  const handleEdit = async () => {
-    if (!editingPost) return;
-
-    try {
-      await updateDoc(doc(db, 'blogPosts', editingPost.id), {
-        body: editContent,
-        timestamp: Timestamp.now(),
-      });
-      setEditModalOpen(false);
-      fetchPosts();
-    } catch (error) {
-      console.error('Error updating post:', error);
-    }
-  };
-
   return (
-    <Stack>
+    <Container size="xl">
       {title && <Title order={2}>{title}</Title>}
-
       <Accordion>
         <Accordion.Item value="editor">
           <Accordion.Control disabled={!canPost}>
@@ -268,37 +177,15 @@ export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, o
       <Title order={3} mt="xl">Existing Posts</Title>
 
       <BlogPostGrid
-        key={posts.length}
-        title=""
-        description=""
-        isAdmin={true}
+        title={`${organization} Updates`}
+        description={`View and manage ${organization.toLowerCase()} committee posts`}
         organization={organization}
-        onDeletePost={handleDelete}
-        onVisibilityToggle={handleVisibilityToggle}
+        showInvisiblePosts={true}
+        showAuthorInfo={true}
+        showControls={true}
+        refreshTrigger={refreshTrigger}
+        resetRefreshTrigger={() => setRefreshTrigger(0)}
       />
-
-      <Modal
-        opened={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        title="Edit Post"
-        size="xl"
-      >
-        <Stack>
-          <RichTextEditor
-            editor={editEditor}
-            minHeight="250px"
-            showTextFormatting={true}
-            showHeadingFormatting={false}
-            showListFormatting={false}
-            showBlockquoteFormatting={false}
-            showHorizontalRuleFormatting={false}
-          />
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={() => setEditModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleEdit}>Save Changes</Button>
-          </Group>
-        </Stack>
-      </Modal>
-    </Stack>
+    </Container>
   );
 }; 

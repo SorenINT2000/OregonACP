@@ -10,9 +10,11 @@ export default function DashboardHome() {
 
       <Container size="xl" px={0}>
         <BlogPostGrid
-          title="All Committee Updates"
-          description="View and manage all committee posts"
-          isAdmin={true}
+          title="All Blog Posts"
+          description="Manage all blog posts across all committees"
+          showInvisiblePosts={true}
+          showAuthorInfo={true}
+          showControls={true}
         />
       </Container>
     </Stack>

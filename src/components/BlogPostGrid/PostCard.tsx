@@ -5,11 +5,11 @@ import { Timestamp } from 'firebase/firestore';
 
 interface BlogPost {
   id: string;
-  authorId: string;
   body: string;
   timestamp: Timestamp;
   organization: string;
-  visible: boolean;
+  visible?: boolean;
+  authorInfo?: UserInfo;
 }
 
 interface UserInfo {
@@ -21,28 +21,17 @@ interface UserInfo {
 
 interface PostCardProps {
   post: BlogPost;
-  users: Record<string, UserInfo>;
+  authorInfo?: UserInfo;
   onPostClick: (post: BlogPost) => void;
-  isAdmin?: boolean;
+  enableEdit: boolean;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, users, onPostClick, isAdmin = false }) => {
-  console.log('PostCard rendering with post:', post);
-
-  const getAuthorName = (authorId: string) => {
-    const user = users[authorId];
-    if (user) {
-      return user.displayName || user.email || 'Unknown User';
-    }
-    return 'Unknown User';
+export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClick, enableEdit }) => {
+  const getAuthorName = () => {
   };
 
-  const getAuthorPhoto = (authorId: string) => {
-    const user = users[authorId];
-    if (user && user.photoURL) {
-      return user.photoURL;
-    }
-    return null;
+  const getAuthorPhoto = () => {
+    return;
   };
 
   const getCommitteeName = (organization: string | undefined) => {
@@ -71,19 +60,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post, users, onPostClick, is
     >
       <Stack h="100%" gap="xs">
         <Group justify="space-between">
-          {isAdmin ? (
+          {authorInfo && (
             <Group>
               <Avatar
-                src={getAuthorPhoto(post.authorId)}
+                src={authorInfo.photoURL}
                 radius="xl"
                 size="sm"
                 color="blue"
               />
-              <Text fw={500} size="sm">{getAuthorName(post.authorId)}</Text>
-            </Group>
-          ) : (
-            <div></div> // Empty div to maintain layout
-          )}
+              <Text fw={500} size="sm">
+                {authorInfo.displayName || authorInfo.email?.split('@')[0] || 'Unknown User'}
+              </Text>
+            </Group>)}
           <Badge color={
             post.organization === 'awards' ? 'blue' :
               post.organization === 'policy' ? 'green' :

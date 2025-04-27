@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, Modal, ActionIcon, Switch, Button, Pagination, Center } from '@mantine/core';
-import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc, limit, startAfter, where } from 'firebase/firestore';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Title, Text, Card, SimpleGrid, Group, Avatar, Badge, Stack, Container, Modal, ActionIcon, Switch, Button, Pagination, Center, Popover } from '@mantine/core';
+import { getFirestore, collection, getDocs, query, orderBy, Timestamp, updateDoc, doc, deleteDoc, limit, startAfter, endBefore, where, getCountFromServer, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { app } from '../../firebase';
 import classes from './BlogPostGrid.module.css';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -14,56 +15,72 @@ import { RichTextEditor } from '../RichTextEditor';
 import { PostCard } from './PostCard';
 import { Skeleton } from '@mantine/core';
 
-interface BlogPost {
-  id: string;
-  authorId: string;
-  body: string;
-  timestamp: Timestamp;
-  visible: boolean;
-  organization: string;
-}
 
 interface UserInfo {
   uid: string;
   displayName: string | null;
   email: string | null;
-  photoURL?: string;
+  photoURL: string;
+}
+
+interface BlogPost {
+  id: string;
+  authorId?: string;
+  body: string;
+  organization: string;
+  timestamp: Timestamp;
+  visible: boolean;
 }
 
 interface BlogPostGridProps {
   title?: string;
   description?: string;
-  isAdmin?: boolean;
   organization?: string;
-  onDeletePost?: (postId: string) => void;
-  onVisibilityToggle?: (postId: string, currentVisibility: boolean) => void;
+  showInvisiblePosts?: boolean;
+  showAuthorInfo?: boolean;
+  showControls?: boolean;
+  refreshTrigger?: number;
+  resetRefreshTrigger?: () => void;
 }
 
 export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   title = "Latest Updates",
   description = "Stay informed with the latest news and updates from our committees",
-  isAdmin = false,
   organization,
-  onDeletePost,
-  onVisibilityToggle
+  showInvisiblePosts = false,
+  showAuthorInfo = false,
+  showControls = false,
+  refreshTrigger = 0,
+  resetRefreshTrigger = () => { }
 }) => {
+  // Posts
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [users, setUsers] = useState<Record<string, UserInfo>>({});
+  const [authors, setAuthors] = useState<Record<string, UserInfo>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPosts, setTotalPosts] = useState(0);
-  const [lastVisible, setLastVisible] = useState<any>(null);
-  const [firstVisible, setFirstVisible] = useState<any>(null);
-  const [collectionLastVisible, setCollectionLastVisible] = useState<Record<string, any>>({});
-  const postsPerPage = 6;
-  const db = getFirestore(app);
 
-  const editEditor = useEditor({
+  // Pagination
+  const postsPerPage = 6;
+  const [postCount, setPostCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const lastVisible = useRef<any>(null);
+  const firstVisible = useRef<any>(null);
+  const previousPage = useRef(1);
+
+  // Post Details
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editContent, setEditContent] = useState('');
+
+  // Firestore
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const isAuthenticated = () => {
+    return auth.currentUser !== null;
+  };
+
+  const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
@@ -82,118 +99,101 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     },
   });
 
+  // Handle refresh trigger
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      // Reset pagination when refresh is triggered
+      setCurrentPage(1);
+      previousPage.current = 1;
+      lastVisible.current = null;
+      firstVisible.current = null;
+      fetchPosts();
+    }
+  }, [refreshTrigger]);
+
+  // Handle regular pagination and filter changes
   useEffect(() => {
     fetchPosts();
-    if (isAdmin) {
-      fetchUsers();
+  }, [db, currentPage, organization, showInvisiblePosts, editor]);
+
+  // Editor content updates
+  useEffect(() => {
+    if (selectedPost && editor) {
+      editor.commands.setContent(selectedPost.body);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organization, isAdmin]);
-
-  const fetchUsers = async () => {
-    try {
-      const usersSnapshot = await getDocs(collection(db, 'UserProfiles'));
-      const usersData: Record<string, UserInfo> = {};
-
-      usersSnapshot.forEach(doc => {
-        const userData = doc.data();
-        usersData[doc.id] = {
-          uid: doc.id,
-          displayName: userData.displayName || null,
-          email: userData.email || null,
-          photoURL: userData.photoURL || undefined
-        };
-      });
-
-      setUsers(usersData);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
+  }, [selectedPost, editor]);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
 
-      let postsQuery;
-      const postsPerPage = 6;
+      // Count the number of posts that match the filters
+      let filteredQuery = query(
+        collection(db, 'blogPosts'),
+        ...(showInvisiblePosts ? [] : [where('visible', '==', true)]),
+        ...(organization ? [where('organization', '==', organization)] : []),
+      );
 
-      if (organization) {
-        postsQuery = query(
-          collection(db, 'blogPosts'),
-          where('organization', '==', organization),
-          orderBy('timestamp', 'desc'),
-          limit(postsPerPage)
-        );
-      } else {
-        postsQuery = query(
-          collection(db, 'blogPosts'),
-          orderBy('timestamp', 'desc'),
-          limit(postsPerPage)
-        );
+      const countSnapshot = await getCountFromServer(filteredQuery);
+      setPostCount(countSnapshot.data().count);
+
+      // Calculate how many pages to skip
+      const pagesToSkip = currentPage - 1;
+      const postsToSkip = pagesToSkip * postsPerPage;
+
+      // Get all posts up to the current page
+      let postsQuery = query(
+        filteredQuery,
+        orderBy('timestamp', 'desc'),
+        limit(postsToSkip + postsPerPage)
+      );
+
+      const postsSnapshot = await getDocs(postsQuery);
+      const fetchedPosts = postsSnapshot.docs
+        .slice(postsToSkip) // Get only the posts for the current page
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as BlogPost[];
+
+      // Update pagination state
+      if (postsSnapshot.docs.length > 0) {
+        firstVisible.current = postsSnapshot.docs[0];
+        lastVisible.current = postsSnapshot.docs[postsSnapshot.docs.length - 1];
       }
 
-      if (currentPage > 1 && lastVisible) {
-        postsQuery = query(
-          postsQuery,
-          startAfter(lastVisible)
-        );
+      setPosts(fetchedPosts);
+
+      // Collect all unique authorIds from the fetched posts
+      const authorIds = fetchedPosts.map(post => post.authorId);
+
+      if (authorIds.length > 0) {
+        // Fetch author info
+        try {
+          const authorsInfo: Record<string, UserInfo> = {};
+
+          // Use Promise.all to handle multiple async operations
+          await Promise.all(Array.from(authorIds).map(async (authorId) => {
+            if (authorId) {
+              const authorRef = doc(db, 'UserProfiles', authorId);
+              const authorSnapshot = await getDoc(authorRef);
+              if (authorSnapshot.exists()) {
+                const authorInfo = authorSnapshot.data() as UserInfo;
+                authorsInfo[authorId] = authorInfo;
+              }
+            }
+          }));
+
+          setAuthors(authorsInfo);
+        } catch (error) {
+          console.error('Error fetching authors:', error);
+        }
       }
-
-      const snapshot = await getDocs(postsQuery);
-      const fetchedPosts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as BlogPost[];
-
-      const visiblePosts = isAdmin
-        ? fetchedPosts
-        : fetchedPosts.filter(post => post.visible);
-
-      setPosts(visiblePosts);
-      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-
-      const countQuery = organization
-        ? query(
-          collection(db, 'blogPosts'),
-          where('organization', '==', organization)
-        )
-        : query(collection(db, 'blogPosts'));
-
-      const countSnapshot = await getDocs(countQuery);
-      setTotalPosts(countSnapshot.size);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    setCurrentPage(1);
-    setLastVisible(null);
-    setFirstVisible(null);
-    fetchPosts();
-  }, [organization]);
-
-  useEffect(() => {
-    fetchPosts();
-  }, [currentPage]);
-
-  const getAuthorName = (authorId: string) => {
-    const user = users[authorId];
-    if (user) {
-      return user.displayName || user.email || 'Unknown User';
-    }
-    return 'Unknown User';
-  };
-
-  const getAuthorPhoto = (authorId: string) => {
-    const user = users[authorId];
-    if (user && user.photoURL) {
-      return user.photoURL;
-    }
-    return null;
   };
 
   const getCommitteeName = (organization: string | undefined) => {
@@ -211,77 +211,50 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     }
   };
 
-  const handleVisibilityToggle = async (postId: string, currentVisibility: boolean) => {
-    if (onVisibilityToggle) {
-      onVisibilityToggle(postId, currentVisibility);
+  const handleVisibilityToggle = async (newVisibility: boolean) => {
+    if (!selectedPost) {
+      console.error('Post not found for visibility toggle');
+      return;
+    }
+
+    try {
+      // Update in Firestore
+      await updateDoc(doc(db, 'blogPosts', selectedPost.id), {
+        visible: newVisibility,
+      });
+
       // Update local state immediately
       setPosts(prevPosts => prevPosts.map(post =>
-        post.id === postId
-          ? { ...post, visible: !currentVisibility }
+        post.id === selectedPost.id
+          ? { ...post, visible: newVisibility }
           : post
       ));
-      // Update selected post if it's the one being toggled
-      if (selectedPost?.id === postId) {
-        setSelectedPost(prev => prev ? { ...prev, visible: !currentVisibility } : null);
-      }
-    } else {
-      // Find the post to get its collection name
-      const post = posts.find(p => p.id === postId);
-      if (!post) {
-        console.error('Post not found for visibility toggle');
-        return;
-      }
 
-      try {
-        // Update in the master collection
-        await updateDoc(doc(db, 'blogPosts', postId), {
-          visible: !currentVisibility,
-        });
-
-        // Update local state immediately
-        setPosts(prevPosts => prevPosts.map(post =>
-          post.id === postId
-            ? { ...post, visible: !currentVisibility }
-            : post
-        ));
-        // Update selected post if it's the one being toggled
-        if (selectedPost?.id === postId) {
-          setSelectedPost(prev => prev ? { ...prev, visible: !currentVisibility } : null);
-        }
-      } catch (error) {
-        console.error('Error updating post visibility:', error);
-      }
+      // Update selected post state
+      setSelectedPost(prev => prev ? { ...prev, visible: newVisibility } : null);
+    } catch (error) {
+      console.error('Error updating post visibility:', error);
     }
   };
 
-  const openDeleteModal = (postId: string) => {
-    setPostToDelete(postId);
-    setDeleteModalOpen(true);
-  };
-
-  const handleDelete = async (postId: string) => {
-    if (onDeletePost) {
-      onDeletePost(postId);
-    } else {
-      // Find the post to get its collection name
-      const post = posts.find(p => p.id === postId);
-      if (!post) {
-        console.error('Post not found for deletion');
-        return;
-      }
-
-      try {
-        // Delete from the master collection
-        await deleteDoc(doc(db, 'blogPosts', postId));
-
-        setDeleteModalOpen(false);
-        setPostToDelete(null);
-        fetchPosts();
-      } catch (error) {
-        console.error('Error deleting post:', error);
-      }
+  const handleDelete = async () => {
+    if (!selectedPost) {
+      console.error('No post selected for deletion');
+      return;
     }
-  };
+
+    try {
+      // Delete from collection
+      await deleteDoc(doc(db, 'blogPosts', selectedPost.id));
+
+      // Update local state
+      setPosts(prevPosts => prevPosts.filter(p => p.id !== selectedPost.id));
+      setSelectedPost(null);
+      setDeletePopoverOpen(false);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  }
 
   const handleEdit = async () => {
     if (!selectedPost) return;
@@ -289,18 +262,18 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
     try {
       // Update in the master collection
       await updateDoc(doc(db, 'blogPosts', selectedPost.id), {
-        body: editContent,
+        body: editor?.getHTML() || '',
         timestamp: Timestamp.now(),
       });
 
       // Update local state
       setPosts(prevPosts => prevPosts.map(post =>
         post.id === selectedPost.id
-          ? { ...post, body: editContent }
+          ? { ...post, body: editor?.getHTML() || '' }
           : post
       ));
 
-      setSelectedPost(prev => prev ? { ...prev, body: editContent } : null);
+      setSelectedPost(prev => prev ? { ...prev, body: editor?.getHTML() || '' } : null);
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating post:', error);
@@ -308,202 +281,164 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
   };
 
   const startEditing = (post: BlogPost) => {
-    setSelectedPost(post);
-    setEditContent(post.body);
-    editEditor?.commands.setContent(post.body);
+    editor?.commands.setContent(post.body);
     setIsEditing(true);
-  };
-
-  const renderPosts = () => {
-    const totalPages = Math.ceil(totalPosts / postsPerPage);
-
-    return (
-      <Stack gap="xl">
-        {totalPages > 1 && (
-          <Center>
-            <Pagination
-              value={currentPage}
-              onChange={setCurrentPage}
-              total={totalPages}
-              radius="md"
-              size="md"
-              disabled={loading}
-            />
-          </Center>
-        )}
-
-        {loading ? (
-          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-            {Array.from({ length: postsPerPage }).map((_, index) => (
-              <Skeleton key={index} height='360px' width='420px' radius="md" />
-            ))}
-          </SimpleGrid>
-        ) : posts.length === 0 ? (
-          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-            <Card withBorder p="md">
-              <Text>No posts available.</Text>
-            </Card>
-          </SimpleGrid>
-        ) : (
-          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-            {posts.map((post) => {
-              const postWithOrganization = {
-                ...post,
-                organization: post.organization
-              };
-
-              return (
-                <PostCard
-                  key={post.id}
-                  post={postWithOrganization}
-                  users={users}
-                  onPostClick={setSelectedPost}
-                  isAdmin={isAdmin}
-                />
-              );
-            })}
-          </SimpleGrid>
-        )}
-      </Stack>
-    );
   };
 
   return (
     <Container size="xl" className={classes.wrapper}>
       <Stack>
         {title && <Title order={2} className={classes.title}>{title}</Title>}
-        {description && <Text size="mb" className={classes.description}>{description}</Text>}
+        {description && <Text size="lg" className={classes.description} mb="xl">{description}</Text>}
 
-        {renderPosts()}
+        {/* Pagination */}
+        <Center mt="xl">
+          <Pagination
+            total={Math.ceil(postCount / postsPerPage)}
+            value={currentPage}
+            onChange={setCurrentPage}
+          />
+        </Center>
 
-        <Modal
-          opened={selectedPost !== null}
-          onClose={() => {
-            setSelectedPost(null);
-            setIsEditing(false);
-          }}
-          size="80%"
-          title={
-            selectedPost && isAdmin && (
-              <Group>
-                <Avatar
-                  src={getAuthorPhoto(selectedPost.authorId)}
-                  radius="xl"
-                  size="sm"
-                  color="blue"
-                />
-                <div>
-                  <Text fw={500}>{getAuthorName(selectedPost.authorId)}</Text>
-                  <Text size="sm" c="dimmed">
-                    {selectedPost.timestamp?.toDate().toLocaleDateString()} {selectedPost.timestamp?.toDate().toLocaleTimeString()}
-                  </Text>
-                </div>
-              </Group>
-            )
-          }
-        >
-          {selectedPost && (
+        {/* Posts */}
+        <Stack gap="xl">
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+            {/* If loading, show skeletons */}
+            {loading &&
+              Array.from({ length: postsPerPage }).map((_, index) => (
+                <Skeleton key={index} height='360px' width='420px' radius="md" />
+              ))}
+
+            {/* If there are no posts, show a card with a message */}
+            {postCount === 0 && (
+              <Card withBorder p="md">
+                <Text>No posts available.</Text>
+              </Card>
+            )}
+
+            {/* Otherwise show the posts */}
+            {posts?.length > 0 &&
+              posts.map((post) =>
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  authorInfo={showAuthorInfo ? authors[post.authorId as string] : undefined}
+                  onPostClick={() => setSelectedPost(post)}
+                  enableEdit={showControls}
+                />)}
+          </SimpleGrid>
+        </Stack>
+
+
+        {/* View/Edit Post Modal */}
+        {selectedPost && (
+          <Modal
+            opened={!!selectedPost}
+            onClose={() => setSelectedPost(null)}
+            title="Post Details"
+            size="xl"
+          >
             <Stack>
-              <Group justify="apart">
-                <Badge color={
-                  selectedPost.organization === 'awards' ? 'blue' :
-                    selectedPost.organization === 'policy' ? 'green' :
-                      'violet'
-                }>
-                  {getCommitteeName(selectedPost.organization)}
-                </Badge>
+              <Group justify="flex-start">
 
-                {isAdmin && (
+                {/* Author Info */}
+                {showAuthorInfo && (
                   <Group>
-                    <Switch
-                      label="Visible"
-                      checked={selectedPost.visible}
-                      onChange={() => handleVisibilityToggle(selectedPost.id, selectedPost.visible)}
+                    <Avatar
+                      src={authors[selectedPost?.authorId as string]?.photoURL || undefined}
+                      radius="xl"
                       size="sm"
-                    />
-                    <ActionIcon
-                      variant={isEditing ? "filled" : "subtle"}
                       color="blue"
-                      onClick={() => {
-                        if (isEditing) {
-                          handleEdit();
-                        } else {
-                          startEditing(selectedPost);
-                        }
-                      }}
-                    >
-                      <IconEdit size={16} />
-                    </ActionIcon>
-                    <ActionIcon
-                      variant="subtle"
-                      color="red"
-                      onClick={() => openDeleteModal(selectedPost.id)}
-                    >
-                      <IconTrash size={16} />
-                    </ActionIcon>
+                    />
+                    <Text fw={500}>{authors[selectedPost?.authorId as string]?.displayName || authors[selectedPost?.authorId as string]?.email || 'Unknown User'}</Text>
                   </Group>
                 )}
+
+                {/* Committee Badge */}
+                <Badge color={
+                  selectedPost?.organization === 'awards' ? 'blue' :
+                    selectedPost?.organization === 'policy' ? 'green' :
+                      'violet'
+                }>
+                  {getCommitteeName(selectedPost?.organization)}
+                </Badge>
               </Group>
 
-              {isEditing ? (
-                <Stack>
-                  <RichTextEditor
-                    editor={editEditor}
-                    minHeight="250px"
-                    showTextFormatting={true}
-                    showHeadingFormatting={true}
-                    showListFormatting={true}
-                    showBlockquoteFormatting={true}
-                    showHorizontalRuleFormatting={true}
+              {/* Controls */}
+              {showControls &&
+                <Group justify="flex-start">
+                  {/* Visibility Toggle */}
+                  <Switch
+                    label="Visible"
+                    checked={selectedPost.visible}
+                    onChange={(event) => handleVisibilityToggle(event.currentTarget.checked)}
                   />
-                  <Group justify="flex-end">
-                    <Button variant="subtle" onClick={() => {
-                      setIsEditing(false);
-                      setEditContent(selectedPost.body);
-                      editEditor?.commands.setContent(selectedPost.body);
-                    }}>Cancel</Button>
+
+                  {/* Edit Button */}
+                  <ActionIcon
+                    variant="light"
+                    color="blue"
+                    onClick={() => startEditing(selectedPost)}
+                  >
+                    <IconEdit size={16} />
+                  </ActionIcon>
+
+                  {/* Delete Button */}
+                  <Popover
+                    opened={deletePopoverOpen}
+                    onChange={setDeletePopoverOpen}
+                    position="bottom"
+                    withArrow
+                    shadow="md"
+                  >
+                    <Popover.Target>
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        onClick={() => setDeletePopoverOpen(true)}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Popover.Target>
+                    <Popover.Dropdown>
+                      <Stack>
+                        <Text>Are you sure you want to delete this post?</Text>
+                        <Group justify="flex-end">
+                          <Button variant="subtle" onClick={() => setDeletePopoverOpen(false)}>Cancel</Button>
+                          <Button color="red" onClick={handleDelete}>Delete</Button>
+                        </Group>
+                      </Stack>
+                    </Popover.Dropdown>
+                  </Popover>
+                </Group>}
+
+              {/* Timestamp */}
+              <Text size="sm" c="dimmed">
+                {selectedPost?.timestamp?.toDate().toLocaleDateString()} {selectedPost?.timestamp?.toDate().toLocaleTimeString()}
+              </Text>
+
+              {/* Post Content */}
+              {isEditing &&
+                <>
+                  <RichTextEditor editor={editor} />
+
+                  {/* // Save/Cancel Edit Buttons */}
+                  <Group>
+                    <Button variant="subtle" onClick={() => setIsEditing(false)}>Cancel</Button>
                     <Button onClick={handleEdit}>Save Changes</Button>
                   </Group>
-                </Stack>
-              ) : (
-                <div
-                  dangerouslySetInnerHTML={{ __html: selectedPost.body }}
-                  className={classes.postContent}
-                  style={{ maxHeight: '70vh', overflowY: 'auto' }}
-                />
-              )}
-            </Stack>
-          )}
-        </Modal>
+                </>}
 
-        <Modal
-          opened={deleteModalOpen}
-          onClose={() => {
-            setDeleteModalOpen(false);
-            setPostToDelete(null);
-          }}
-          title="Delete Post"
-          size="sm"
-        >
-          <Stack>
-            <Text>Are you sure you want to delete this post? This action cannot be undone.</Text>
-            <Group justify="flex-end">
-              <Button variant="subtle" onClick={() => {
-                setDeleteModalOpen(false);
-                setPostToDelete(null);
-              }}>
-                Cancel
-              </Button>
-              <Button
-                color="red"
-                onClick={() => postToDelete && handleDelete(postToDelete)}
-              >
-                Delete
-              </Button>
-            </Group>
-          </Stack>
-        </Modal>
+              {!isEditing &&
+                <div
+                  dangerouslySetInnerHTML={{ __html: selectedPost?.body || '' }}
+                  className={classes.postContent}
+                />
+              }
+            </Stack>
+          </Modal>
+        )}
       </Stack>
-    </Container>
+    </Container >
   );
-}; 
+}
