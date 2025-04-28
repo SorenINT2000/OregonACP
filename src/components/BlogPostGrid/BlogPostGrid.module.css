@@ -37,6 +37,9 @@
   overflow: hidden;
   position: relative;
   max-height: 100%;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--mantine-color-gray-7);
 }
 
 /* Add gradient back for PostCards but exclude it from modal view */
@@ -58,9 +61,9 @@
 
 /* Styles for images within post content */
 .postContent img {
+  display: block;
+  margin: 1.5rem auto;
   max-width: 100%;
   height: auto;
-  display: block;
-  margin: 10px 0;
-  border-radius: 4px;
+  border-radius: var(--mantine-radius-md);
 }
