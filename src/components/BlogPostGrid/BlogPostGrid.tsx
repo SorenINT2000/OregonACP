@@ -402,7 +402,7 @@ export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
 
                   {/* Timestamp */}
                   <Text size="sm" c="dimmed">
-                    {selectedPost?.timestamp?.toDate().toLocaleDateString()} {selectedPost?.timestamp?.toDate().toLocaleTimeString()}
+                    {selectedPost?.timestamp?.toDate().toLocaleDateString()} {selectedPost?.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </Group>
                 <Group justify="flex-start">

@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, Group, Avatar, Badge, Stack, Text } from '@mantine/core';
 import classes from './BlogPostGrid.module.css';
 import { Timestamp } from 'firebase/firestore';
+import { formatRelativeTime } from '../../utils/dateUtils';
+import { JSX } from 'react';
 
 // Committee gradient colors
 const committeeGradients = {
@@ -65,6 +67,40 @@ export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClic
     })
   };
 
+  // Helper function to render author info
+  const renderAuthorInfo = (): JSX.Element | null => {
+    if (!authorInfo) return null;
+
+    return (
+      <Group>
+        <Avatar
+          src={authorInfo.photoURL}
+          radius="xl"
+          size="sm"
+          color="blue"
+        />
+        <Text fw={500} size="sm">
+          {authorInfo.displayName || authorInfo.email?.split('@')[0] || 'Unknown User'}
+        </Text>
+      </Group>
+    );
+  };
+
+  // Helper function to render committee badge
+  const renderCommitteeBadge = (): JSX.Element => {
+    return (
+      <Badge
+        variant="gradient"
+        gradient={
+          committeeGradients[post.organization as keyof typeof committeeGradients] ||
+          committeeGradients.default
+        }
+      >
+        {getCommitteeName(post.organization)}
+      </Badge>
+    );
+  };
+
   return (
     <Card
       withBorder
@@ -75,40 +111,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClic
       onClick={() => onPostClick(post)}
     >
       <Stack h="100%" gap="xs">
-        <Group justify="space-between">
-          {authorInfo && (
-            <Group>
-              <Avatar
-                src={authorInfo.photoURL}
-                radius="xl"
-                size="sm"
-                color="blue"
-              />
-              <Text fw={500} size="sm">
-                {authorInfo.displayName || authorInfo.email?.split('@')[0] || 'Unknown User'}
-              </Text>
-            </Group>)}
-          <Group>
-            <Badge
-              variant="gradient"
-              gradient={
-                committeeGradients[post.organization as keyof typeof committeeGradients] ||
-                committeeGradients.default
-              }
-            >
-              {getCommitteeName(post.organization)}
-            </Badge>
-          </Group>
+        <Group justify="space-between flex-end">
+          {authorInfo ? renderAuthorInfo() : renderCommitteeBadge()}
+          <Text size="sm" c="dimmed">
+            {formatRelativeTime(post.timestamp?.toDate() || new Date())}
+          </Text>
         </Group>
 
-        <Group justify="space-between">
-          <Text size="sm" c="dimmed">
-            {post.timestamp?.toDate().toLocaleDateString()} {post.timestamp?.toDate().toLocaleTimeString()}
-          </Text>
-          {/* Add visibility indicator badge if the post is invisible */}
-          {!isVisible && (
-            <Badge color="orange" variant="light">Hidden</Badge>
-          )}
+        <Group justify="flex-start">
+          {authorInfo && renderCommitteeBadge()}
+          {!isVisible && <Badge color="orange" variant="light">Hidden</Badge>}
         </Group>
 
         <div
