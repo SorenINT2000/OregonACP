@@ -42,6 +42,12 @@
   color: var(--mantine-color-gray-7);
 }
 
+/* Remove top padding from the first element in post cards */
+.postContent > *:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
 /* Add gradient back for PostCards but exclude it from modal view */
 .postContent::after {
   content: '';
