@@ -3,6 +3,14 @@ import { Card, Group, Avatar, Badge, Stack, Text } from '@mantine/core';
 import classes from './BlogPostGrid.module.css';
 import { Timestamp } from 'firebase/firestore';
 
+// Committee gradient colors
+const committeeGradients = {
+  awards: { from: 'yellow', to: 'red' },
+  policy: { from: 'cyan', to: 'green' },
+  chapterMeeting: { from: 'violet', to: 'blue' },
+  default: { from: 'gray', to: 'black' }
+};
+
 interface BlogPost {
   id: string;
   body: string;
@@ -81,11 +89,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, authorInfo, onPostClic
               </Text>
             </Group>)}
           <Group>
-            <Badge color={
-              post.organization === 'awards' ? 'blue' :
-                post.organization === 'policy' ? 'green' :
-                  'violet'
-            }>
+            <Badge
+              variant="gradient"
+              gradient={
+                committeeGradients[post.organization as keyof typeof committeeGradients] ||
+                committeeGradients.default
+              }
+            >
               {getCommitteeName(post.organization)}
             </Badge>
           </Group>

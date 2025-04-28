@@ -44,10 +44,10 @@ interface BlogPostGridProps {
 
 // Committee gradient colors
 const committeeGradients = {
-  awards: { from: 'blue', to: 'cyan' },
-  policy: { from: 'green', to: 'lime' },
-  chapterMeeting: { from: 'violet', to: 'grape' },
-  default: { from: 'blue', to: 'green' }
+  awards: { from: 'yellow', to: 'red' },
+  policy: { from: 'cyan', to: 'green' },
+  chapterMeeting: { from: 'violet', to: 'blue' },
+  default: { from: 'gray', to: 'black' }
 };
 
 export const BlogPostGrid: React.FC<BlogPostGridProps> = ({
