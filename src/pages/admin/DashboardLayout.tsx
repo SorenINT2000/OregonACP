@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AppShell, Group, Button, Text, Stack, Divider, Badge } from '@mantine/core';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -20,7 +20,7 @@ interface UserPermissions {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { logout, currentUser, refreshUserClaims, loading } = useAuth();
+  const { logout, currentUser, loading } = useAuth();
   const navigate = useNavigate();
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const db = getFirestore(app);

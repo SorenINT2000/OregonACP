@@ -68,6 +68,20 @@ const aboutSlides = [
         gradient: { from: 'blue', to: 'cyan' }
       }
     ]
+  },
+  {
+    title: "Who",
+    gradientText: "We Are",
+    description: "As part of the nation's largest and most respected medical specialty organization, our chapter unites more than 1,700 members across Oregon.",
+    backgroundImage: homeHeroBg1,
+    bottomDescription: "We serve as the local arm of ACP, translating national policies and best practices into actionable strategies that benefit our local communities.",
+    buttons: [
+      {
+        text: 'Learn More',
+        onClick: () => window.location.href = '#mission',
+        gradient: { from: 'teal', to: 'lime' }
+      }
+    ]
   }
 ];
 
@@ -79,6 +93,7 @@ const About: React.FC = () => {
         gradientTo="rgb(0, 71, 59)"
         gradientOpacity={0.5}
       />
+
       <Container size="lg" py="xl">
         <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
           <Title order={2} mb="md" ta="center">Governor's Welcome</Title>
@@ -170,19 +185,6 @@ const About: React.FC = () => {
           </Text>
           <Text size="lg" ta="left" mb="md">
             We envision a vibrant network where every member—from established physicians and specialists to trainees and medical students—finds opportunities to grow, connect, and lead in a changing healthcare landscape.
-          </Text>
-        </Paper>
-
-        <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
-          <Title order={2} mb="md" ta="center">Who We Are</Title>
-          <Text size="lg" ta="left" mb="md">
-            As part of the nation's largest and most respected medical specialty organization, our chapter unites more than 1,800 members across Oregon.
-          </Text>
-          <Text size="lg" ta="left" mb="md">
-            These include practicing internists, subspecialists, resident and fellow physicians, and medical students.
-          </Text>
-          <Text size="lg" ta="left" mb="md">
-            We serve as the local arm of ACP, translating national policies and best practices into actionable strategies that benefit our local communities.
           </Text>
         </Paper>
 

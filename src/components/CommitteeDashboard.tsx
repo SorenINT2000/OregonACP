@@ -1,191 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Title,
-  Button,
-  Group,
-  Card,
-  Stack,
-  Modal,
-  Accordion,
-  Text,
-  Container
-} from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import React, { useState } from 'react';
+import { Stack, Text, Divider } from '@mantine/core';
 import '@mantine/core/styles.css';
 import '@mantine/tiptap/styles.css';
-import { getFirestore, collection, addDoc, deleteDoc, doc, getDocs, updateDoc, Timestamp, getDoc, query, where, orderBy } from 'firebase/firestore';
-import { app } from '../firebase';
-import { getAuth } from 'firebase/auth';
-import { useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Highlight from '@tiptap/extension-highlight';
-import Underline from '@tiptap/extension-underline';
-import Image from '@tiptap/extension-image';
-import TextAlign from '@tiptap/extension-text-align';
-import Placeholder from '@tiptap/extension-placeholder';
-import { RichTextEditor } from './RichTextEditor';
 import { BlogPostGrid } from './BlogPostGrid/BlogPostGrid';
-import { useAuth } from '../contexts/AuthContext';
 
 interface CommitteeDashboardProps {
   title: string;
   organization: string;
 }
 
+// Committee gradient colors
+const committeeGradients = {
+  awards: { from: '#fab005', to: '#fa5252' },
+  policy: { from: '#15aabf', to: '#40c057' },
+  chapterMeeting: { from: '#7950f2', to: '#228be6' },
+  default: { from: '#bbbbbb', to: '#000000' }
+};
+
+const committeeNames = {
+  awards: 'Awards',
+  policy: 'Policy',
+  chapterMeeting: 'Chapter Meeting',
+  default: 'Unknown'
+};
+
 export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, organization }) => {
-  const [composeContent, setComposeContent] = useState('');
-  const [canPost, setCanPost] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  const { currentUser } = useAuth();
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Highlight,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-      Image.configure({
-        inline: false,
-        allowBase64: false,
-      }),
-      Placeholder.configure({
-        placeholder: 'Compose a blog post',
-      }),
-    ],
-    content: composeContent,
-    onUpdate: ({ editor }) => {
-      setComposeContent(editor.getHTML());
-    },
-  });
-
-  const checkPermissions = async () => {
-    if (!auth.currentUser) {
-      setCanPost(false);
-      return;
-    }
-
-    // Check if user is executive or owner - they should have access to all blogs
-    if (currentUser?.executive || currentUser?.owner) {
-      console.log('User is executive or owner, granting access');
-      setCanPost(true);
-      return;
-    }
-
-    // For non-executive/non-owner users, check specific blog permissions
-    try {
-      const permissionsRef = doc(db, 'UserPermissions', auth.currentUser.uid);
-      const permissionsDoc = await getDoc(permissionsRef);
-
-      console.log('Permissions doc exists:', permissionsDoc.exists());
-      if (permissionsDoc.exists()) {
-        const data = permissionsDoc.data();
-        console.log('Permissions data:', data);
-        // Check if the permissions object exists and has the specific blog permission
-        const hasPermission = data?.permissions?.[`${organization}Blog`] === true;
-        console.log('Has permission for', organization, ':', hasPermission);
-        setCanPost(hasPermission);
-      } else {
-        console.log('No permissions document found');
-        setCanPost(false);
-      }
-    } catch (error) {
-      console.error('Error checking permissions:', error);
-      setCanPost(false);
-    }
-  };
-
-  useEffect(() => {
-    checkPermissions();
-  }, [organization, currentUser]);
-
-  const handleSubmit = async () => {
-    if (!auth.currentUser) return;
-    if (!composeContent.trim()) return;
-
-    try {
-      await addDoc(collection(db, 'blogPosts'), {
-        authorId: auth.currentUser.uid,
-        body: composeContent,
-        timestamp: Timestamp.now(),
-        visible: true,
-        organization: organization
-      });
-
-      setComposeContent('');
-      editor?.commands.setContent('');
-      // Increment refresh trigger to cause a refresh
-      setRefreshTrigger(prev => prev + 1);
-
-      notifications.show({
-        title: 'Success',
-        message: 'Post created successfully',
-        color: 'green'
-      });
-    } catch (error) {
-      console.error('Error creating post:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to create post',
-        color: 'red'
-      });
-    }
-  };
-
+  const gradient = committeeGradients[organization as keyof typeof committeeGradients] || committeeGradients.default;
+  const committeeName = committeeNames[organization as keyof typeof committeeNames] || committeeNames.default;
   return (
-    <Container size="xl">
-      {title && <Title order={2}>{title}</Title>}
-      <Accordion>
-        <Accordion.Item value="editor">
-          <Accordion.Control disabled={!canPost}>
-            <Group justify="space-between">
-              <Text>Create New Post</Text>
-              {!canPost && (
-                <Text size="sm" c="dimmed">
-                  You don't have permission to post in this committee
-                </Text>
-              )}
-            </Group>
-          </Accordion.Control>
-          <Accordion.Panel>
-            <Card withBorder p="md">
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleSubmit();
-              }}>
-                <Stack>
-                  <RichTextEditor
-                    editor={editor}
-                    minHeight="250px"
-                    showTextFormatting={true}
-                    showHeadingFormatting={true}
-                    showListFormatting={true}
-                    showBlockquoteFormatting={true}
-                    showHorizontalRuleFormatting={true}
-                  />
-                  <Button type="submit">Create Post</Button>
-                </Stack>
-              </form>
-            </Card>
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
+    <Stack align="center" ta="center" gap="0">
+      <Text
+        fw={900}
+        size="3rem"
+        variant="gradient"
+        gradient={{ from: gradient.from, to: gradient.to, deg: 90 }}
+      >
+        {`${committeeName} Updates`}
+        <Divider
+          my="sm"
+          style={{
+            background: `linear-gradient(90deg, ${gradient.from}, ${gradient.to})`,
+            clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+            height: '2px',
+            border: 'none'
+          }}
+        />
+      </Text>
 
-      <Title order={3} mt="xl">Existing Posts</Title>
+      <Text
+        size="md"
+        c="dimmed"
+        pb="xs"
+      >
+        {`View and manage ${committeeName.toLowerCase()} committee posts`}
+      </Text>
 
       <BlogPostGrid
-        title={`${organization} Updates`}
-        description={`View and manage ${organization.toLowerCase()} committee posts`}
         organization={organization}
         showInvisiblePosts={true}
         showAuthorInfo={true}
         showControls={true}
+        showCreateCard={true}
         refreshTrigger={refreshTrigger}
         resetRefreshTrigger={() => setRefreshTrigger(0)}
       />
-    </Container>
+    </Stack>
   );
 }; 

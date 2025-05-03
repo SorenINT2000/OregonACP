@@ -1,22 +1,46 @@
-import React from 'react';
-import { Title, Text, Stack, Container } from '@mantine/core';
+import React, { useState } from 'react';
+import { Text, Stack, Divider } from '@mantine/core';
 import { BlogPostGrid } from '../../components/BlogPostGrid/BlogPostGrid';
 
 export default function DashboardHome() {
-  return (
-    <Stack>
-      <Title order={2}>Dashboard Home</Title>
-      <Text size="lg" mb="xl">Recent posts from all committees</Text>
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-      <Container size="xl" px={0}>
-        <BlogPostGrid
-          title="All Blog Posts"
-          description="Manage all blog posts across all committees"
-          showInvisiblePosts={true}
-          showAuthorInfo={true}
-          showControls={true}
+  return (
+    <Stack align="center" gap="0">
+      <Text
+        fw={900}
+        size="3rem"
+        variant="gradient"
+        gradient={{ from: '#fab005', to: '#fa5252', deg: 90 }}
+      >
+        Community Bulletin
+        <Divider
+          my="sm"
+          style={{
+            background: 'linear-gradient(90deg, #fab005, #fa5252)',
+            clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+            height: '2px',
+            border: 'none'
+          }}
         />
-      </Container>
-    </Stack>
+      </Text>
+
+      <Text
+        size="md"
+        c="dimmed"
+        pb="xs"
+      >
+        Manage all blog posts across all committees
+      </Text>
+
+      <BlogPostGrid
+        showInvisiblePosts={true}
+        showAuthorInfo={true}
+        showControls={true}
+        refreshTrigger={refreshTrigger}
+        resetRefreshTrigger={() => setRefreshTrigger(0)}
+        showCreateCard={true}
+      />
+    </Stack >
   );
 } 

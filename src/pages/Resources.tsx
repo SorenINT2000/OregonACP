@@ -21,7 +21,7 @@ const links = [
   },
   {
     img: prov,
-    title: 'Portland Medical Center',
+    title: 'Providence Portland Medical Center',
     description:
       'The Portland Medical Center is a full-service medical center specializing in cancer and cardiac care.',
     link: 'https://www.providence.org/locations/or/portland-medical-center'
@@ -42,7 +42,7 @@ const links = [
   },
   {
     img: prov,
-    title: 'St. Vincent Medical Center',
+    title: 'Providence St. Vincent Medical Center',
     description:
       'A nonprofit network of hospitals, health plans, physicians, clinics and affiliated health services',
     link: 'https://www.providence.org/locations/or/st-vincent-medical-center'
@@ -80,31 +80,30 @@ const Resources: React.FC = () => {
         backgroundImage={heroBackground}
         gradientTo="rgb(0, 71, 59)"
         gradientOpacity={0.5}
-        buttons={[{ text: 'Apply for a Scholarship', gradient: { from: 'yellow', to: 'lime' }, onClick: () => window.location.href = '/scholarship' }]}
       />
-      
+
       <PDFViewer
         title="Oregon ACP Bylaws 2024"
         description="Official bylaws governing the Oregon Chapter of ACP, including organizational structure, membership requirements, and operational guidelines."
         pdfPath="/assets/OregonBylaws2024.pdf"
       />
-      
+
       <PDFViewer
         title="Oregon ACP DEI Policy"
         description="Our commitment to diversity, equity, and inclusion, outlining our chapter's policies and initiatives to foster a more inclusive healthcare environment."
         pdfPath="/assets/DEIPolicy.pdf"
       />
-      
+
       <PDFViewer
         title="Oregon ACP Strategic Plan 2024-2028"
         description="Our strategic plan for the Oregon Chapter of ACP, outlining our goals and initiatives for the next four years."
         pdfPath="/assets/StrategicPlan.pdf"
       />
-      
-      <LinkGrid 
-        title="Local Resources" 
-        description="Connect with major healthcare organizations across Oregon, including hospital systems, health authorities, and medical centers. Access their latest updates, services, and resources to stay informed about healthcare developments in our region." 
-        links={links} 
+
+      <LinkGrid
+        title="Local Resources"
+        description="Connect with major healthcare organizations across Oregon, including hospital systems, health authorities, and medical centers. Access their latest updates, services, and resources to stay informed about healthcare developments in our region."
+        links={links}
       />
     </>
   );

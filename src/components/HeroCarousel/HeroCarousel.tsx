@@ -155,7 +155,7 @@ export function HeroCarousel({
 
               {slide.bottomDescription && (
                 <Paper className={classes.bottomDescription} p="lg" withBorder>
-                  <Text size="sm" c="dimmed" fw={500}>
+                  <Text size="sm" fw={500}>
                     {slide.bottomDescription}
                   </Text>
                 </Paper>

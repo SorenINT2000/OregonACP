@@ -1,26 +1,3 @@
-.title {
-  font-family:
-    Greycliff CF,
-    var(--mantine-font-family);
-  font-weight: 900;
-  text-align: center;
-
-  @media (max-width: mantine-breakpoint-sm) {
-    font-size: 28px;
-    text-align: left;
-  }
-}
-
-.description {
-  text-align: center;
-  max-width: 600px;
-  margin: 0 auto;
-
-  @media (max-width: mantine-breakpoint-sm) {
-    text-align: left;
-  }
-}
-
 .card {
   transition: all 0.3s ease;
   transform: translateY(0);

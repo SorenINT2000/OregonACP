@@ -36,10 +36,9 @@ service cloud.firestore {
       allow read: if !isAuthenticated() && resource.data.visible == true;
       // Authenticated users can read all posts
       allow read: if isAuthenticated();
-      // Only owners and executives can create/update/delete posts
-      allow create: if isOwner() || isExecutive();
-      allow update, delete: if isOwner() || 
-        (isExecutive() && hasCommitteePermission(resource.data.organization));
+      // Allow owners, executives, or users with committee permission to create/update/delete posts
+      allow create: if isOwner() || isExecutive() || hasCommitteePermission(resource.data.organization);
+      allow update, delete: if isOwner() || isExecutive() || hasCommitteePermission(resource.data.organization);
     }
 
     // User Permissions security rules

@@ -1,8 +1,6 @@
 - fix landing page mission statement on mobile (white background is not good)
 
-- on landing page PC, identity mission statement as mission statement
 - on landing page, have carousel instead of hero (with current hero as first slide, and move the
-
   mission statement to be static below the carousel)
 - have mission statement have its own slide
 
@@ -15,16 +13,6 @@ for home page:
   - remove gov's newsletter, add community bulletin
   - carousel w/ welcome, mission statement, latest update (award winners!, save the date/register now for annual meeting!)
   - learn more, volunteer, donate -> welcome
-
-for about page:
-  - pic of governor + governor's welcome
-  - move "who we are" to carousel's "About Oregon ACP" (1800 -> 1700)
-  
-for resources:
-  - remove "apply for scholarship" button
-  - portland medical center -> providence portland medical center
-  - st. vincent medical center -> providence st. vincent medical center
-  
   
 - add "committees" and "counsels" tab between events and scholarship
 - "committees" dropdown -> health & public policy, wellness, finance, DEI & membership, awards, chapter meeting
@@ -44,10 +32,11 @@ place scholarship info in Resources above
 
 add storage for blog post pictures
 
-executives can sign up new users
+owners/executives can sign up new users
 
 change the profile pictures of users in permission table to  be larger + vertically fill the row more
 
 fix pagination for visible/invisible posts
 
 Add database triggers to automatically delete Firestore documents when a user is deleted from Auth
+Add a way for owners to delete users
