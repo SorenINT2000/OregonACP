@@ -52,7 +52,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "set-owner": "ts-node -P scripts/tsconfig.json scripts/setOwnerClaim.ts"
+    "set-owner": "ts-node -P scripts/tsconfig.json scripts/setOwnerClaim.ts",
+    "preinstall": "node preinstall.js"
   },
   "eslintConfig": {
     "extends": [

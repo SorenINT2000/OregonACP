@@ -1,46 +1,197 @@
-# Getting Started with Create React App
+# Oregon Chapter of American College of Physicians (ACP)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, responsive web application for the Oregon Chapter of the American College of Physicians, built with React and Firebase.
 
-## Available Scripts
+## 🏥 About Oregon ACP
 
-In the project directory, you can run:
+The American College of Physicians (ACP) is the largest medical-specialty society in the world, with over 160,000 members worldwide. The Oregon Chapter serves internal medicine specialists and subspecialists throughout Oregon.
 
-### `npm start`
+**Mission**: "To enhance the quality and effectiveness of health care by fostering excellence and professionalism in the practice of medicine."
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## 🚀 Key Features
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Public Features
 
-### `npm test`
+- **Homepage**: Welcome section with committee updates
+- **Committee Updates**: Public blog posts from Awards, Policy, and Chapter Meeting committees
+- **Events Calendar**: Chapter events and meetings
+- **Resources**: Bylaws, policies, and local healthcare organization links
+- **Scholarship Information**: Chapter scholarship details
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Administrative Features
 
-### `npm run build`
+- **Admin Dashboard**: Secure management interface
+- **Blog Management**: Rich text editor for committee posts
+- **User Management**: Role-based access control
+- **Password Reset**: Firebase-based authentication
+- **Profile Management**: User profiles with photo upload
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠 Technology Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Frontend
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **React 19.1.0** with TypeScript
+- **Mantine 7.17.4** UI components
+- **React Router 7.5.0** for routing
+- **TipTap** rich text editor
 
-### `npm run eject`
+### Backend
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- **Firebase 11.6.0**
+  - Authentication with custom claims
+  - Firestore NoSQL database
+  - Cloud Functions
+  - Hosting & Storage
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📁 Project Structure
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```
+oregonacp/
+├── src/
+│   ├── components/           # Reusable components
+│   │   ├── BlogPostGrid/     # Blog management
+│   │   ├── Hero/            # Hero sections
+│   │   ├── Navbar.tsx       # Navigation
+│   │   └── ProtectedRoute.tsx # Auth guard
+│   ├── pages/               # Page components
+│   │   ├── admin/           # Admin pages
+│   │   ├── Home.tsx         # Homepage
+│   │   └── Resources.tsx    # Resources page
+│   ├── contexts/            # React contexts
+│   ├── firebase.ts          # Firebase config
+│   └── App.tsx
+├── functions/               # Cloud Functions
+├── firestore.rules         # Security rules
+└── firebase.json           # Firebase config
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🏗 Architecture
 
-## Learn More
+### Data Models
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+**Blog Posts**
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```typescript
+interface BlogPost {
+  id: string;
+  authorId?: string;
+  body: string;
+  organization: string; // 'awards', 'policy', 'chapterMeeting'
+  timestamp: Timestamp;
+  visible: boolean;
+}
+```
+
+**User Permissions**
+
+```typescript
+interface UserPermissions {
+  permissions: {
+    awardsBlog: boolean;
+    policyBlog: boolean;
+    chapterMeetingBlog: boolean;
+  };
+}
+```
+
+### Authentication & Authorization
+
+- **Public Access**: Homepage, about, events, resources
+- **Authenticated Access**: Admin dashboard
+- **Role-Based Access**:
+  - **Owner**: Full system access
+  - **Executive**: User management + all committees
+  - **Committee Members**: Specific committee access
+
+## 🔒 Security
+
+### Firebase Security Rules
+
+- **Authentication Required**: Admin features require Firebase auth
+- **Role-Based Access**: Custom claims enforce user roles
+- **Committee Permissions**: Granular committee-specific access
+- **Public Read Access**: Blog posts visible publicly (without author info for unauthenticated users)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 16+
+- Firebase CLI
+- Git
+
+### Installation
+
+1. **Clone and install**
+
+   ```bash
+   git clone <repository-url>
+   cd oregonacp
+   npm install
+   cd functions && npm install && cd ..
+   ```
+
+2. **Environment Setup**
+   Create `.env` file:
+
+   ```env
+   REACT_APP_API_KEY=your_api_key
+   REACT_APP_AUTH_DOMAIN=your_auth_domain
+   REACT_APP_PROJECT_ID=your_project_id
+   REACT_APP_STORAGE_BUCKET=your_storage_bucket
+   REACT_APP_MESSAGING_SENDER_ID=your_sender_id
+   REACT_APP_APP_ID=your_app_id
+   REACT_APP_DATABASE_URL=your_database_url
+   ```
+
+3. **Firebase Setup**
+
+   ```bash
+   firebase login
+   firebase use <your-project-id>
+   ```
+
+4. **Start Development**
+
+   ```bash
+   npm start
+   ```
+
+### Development Commands
+
+- `npm start` - Development server
+- `npm run build` - Production build
+- `npm test` - Run tests
+- `firebase emulators:start` - Local Firebase services
+- `firebase deploy` - Deploy to production
+
+## 📝 Usage
+
+### For Administrators
+
+1. Navigate to `/admin` and login
+2. Manage committee blogs and user permissions
+3. Create and edit committee updates
+
+### For Committee Members
+
+1. Access committee-specific dashboard
+2. Create posts with rich text editor
+3. Manage post visibility
+
+### For Public Users
+
+1. Browse committee updates on homepage
+2. Access events and resources
+3. View scholarship information
+
+## 🤝 Contributing
+
+- Follow TypeScript best practices
+- Use functional components with hooks
+- Maintain consistent ESLint formatting
+- Test features thoroughly
+
+---
+
+**Oregon Chapter of ACP** - Excellence in internal medicine.
