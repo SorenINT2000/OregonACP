@@ -37,9 +37,9 @@ export default function DashboardHome() {
         showInvisiblePosts={true}
         showAuthorInfo={true}
         showControls={true}
+        showCreateCard={false}
         refreshTrigger={refreshTrigger}
         resetRefreshTrigger={() => setRefreshTrigger(0)}
-        showCreateCard={true}
       />
     </Stack >
   );

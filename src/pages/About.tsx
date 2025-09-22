@@ -175,16 +175,10 @@ const About: React.FC = () => {
         <Paper shadow="sm" p="xl" radius="md" withBorder mb="md">
           <Title order={2} mb="md" ta="center">Our Mission and Vision</Title>
           <Text size="lg" ta="left" mb="md">
-            The Oregon Chapter of the American College of Physicians (ACP) is dedicated to advancing internal medicine by fostering a community of excellence, collaboration, and continuous learning.
-          </Text>
-          <Text size="lg" ta="left" mb="md">
             <strong>Our Vision:</strong> "To be recognized globally as the leader in promoting quality patient care, advocacy, education and career fulfillment in internal medicine and its subspecialties."
           </Text>
           <Text size="lg" ta="left" mb="md">
             <strong>Our Mission:</strong> "To enhance the quality and effectiveness of health care by fostering excellence and professionalism in the practice of medicine."
-          </Text>
-          <Text size="lg" ta="left" mb="md">
-            We envision a vibrant network where every member—from established physicians and specialists to trainees and medical students—finds opportunities to grow, connect, and lead in a changing healthcare landscape.
           </Text>
         </Paper>
 

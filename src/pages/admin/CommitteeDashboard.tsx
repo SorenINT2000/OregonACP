@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Stack, Text, Divider } from '@mantine/core';
 import '@mantine/core/styles.css';
 import '@mantine/tiptap/styles.css';
-import { BlogPostGrid } from './BlogPostGrid/BlogPostGrid';
+import { BlogPostGrid } from '../../components/BlogPostGrid/BlogPostGrid';
 
 interface CommitteeDashboardProps {
-  title: string;
   organization: string;
 }
 
@@ -24,7 +23,7 @@ const committeeNames = {
   default: 'Unknown'
 };
 
-export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ title, organization }) => {
+export const CommitteeDashboard: React.FC<CommitteeDashboardProps> = ({ organization }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const gradient = committeeGradients[organization as keyof typeof committeeGradients] || committeeGradients.default;
